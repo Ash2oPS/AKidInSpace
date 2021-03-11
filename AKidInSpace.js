@@ -18,34 +18,63 @@ const config = {
     }
 }
 
-////////// VARIABLES //////////
-
-var game = new Phaser.Game(config);
-var dude;
-var cursors
-
-function preload(){
-    this.load.image('maya', 'assets/Maya/spr_Maya.png')
+function noscroll(){
+window.scrollTo(0, 0)
+document.body.style.overflow = 'hidden';
 }
 
+window.addEventListener("scroll", noscroll)
+
+////////// VARIABLES //////////
+
+var game = new Phaser.Game(config)
+var background
+var maya
+var cursors
+
+////////// PRELOAD //////////
+
+function preload(){
+
+    // Backgrounds
+
+    this.load.image('background', 'assets/spr_Background.png')
+
+    // Acteurs actifs
+
+    this.load.image('maya', 'assets/Maya/spr_Maya.png')
+
+}
+
+////////// CREATE //////////
+
 function create(){
-    console.log(this)
-    dude = this.physics.add.image(100, 100, 'maya')
-    dude.body. collideWorldBounds = true
+    // Backgrounds
+
+    background = this.add.image(0, 0, 'background')
+    background.setOrigin(0, 0)
+
+
+
+    // Maya
+    maya = this.physics.add.image(100, 100, 'maya')
+    maya.body. collideWorldBounds = true
     cursors = this.input.keyboard.createCursorKeys()
 }
 
+////////// UPDATE //////////
+
 function update(){
 
-    dude.setVelocityX(0)
+    maya.setVelocityX(0)
 
     if(cursors.up.isDown){
-        dude.setVelocityY(-300)
+        maya.setVelocityY(-300)
     }
     if(cursors.left.isDown){
-        dude.setVelocityX(-100)
+        maya.setVelocityX(-100)
     }
     if(cursors.right.isDown){
-        dude.setVelocityX(100)
+        maya.setVelocityX(100)
     }
 }
