@@ -29,6 +29,7 @@ window.addEventListener("scroll", noscroll)
 
 var game = new Phaser.Game(config)
 var background
+var bgSun
 var maya
 var cursors
 
@@ -39,6 +40,7 @@ function preload(){
     // Backgrounds
 
     this.load.image('background', 'assets/spr_Background.png')
+    this.load.image('bgSun', 'assets/spr_Soleil.png')
 
     // Acteurs actifs
 
@@ -54,6 +56,8 @@ function create(){
     background = this.add.image(0, 0, 'background')
     background.setOrigin(0, 0)
 
+    bgSun = this.add.image(1400, 320, 'bgSun')
+
 
 
     // Maya
@@ -66,15 +70,21 @@ function create(){
 
 function update(){
 
+    //Backgrounds
+
+    bgSun.rotation += .0005
+
+    // Maya
+
     maya.setVelocityX(0)
 
     if(cursors.up.isDown){
-        maya.setVelocityY(-300)
+        maya.setVelocityY(-450)
     }
     if(cursors.left.isDown){
-        maya.setVelocityX(-100)
+        maya.setVelocityX(-450)
     }
     if(cursors.right.isDown){
-        maya.setVelocityX(100)
+        maya.setVelocityX(450)
     }
 }
