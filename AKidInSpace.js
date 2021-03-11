@@ -8,13 +8,14 @@ const config = {
         default: 'arcade',
         arcade:{
             gravity: {y: 450},
-            debug: false
+            debug: true
         }
     },
     scene:{
         preload: preload,
         create: create,
-        update: update
+        update: update,
+        render: render
     }
 }
 
@@ -31,7 +32,12 @@ var game = new Phaser.Game(config)
 var background
 var bgSun
 var maya
+var mouseCursor
 var cursors
+var click
+var mayaBullet
+var mayaShootRate = 30
+var mayaShootSpeed = 20
 
 ////////// PRELOAD //////////
 
@@ -45,12 +51,23 @@ function preload(){
     // Acteurs actifs
 
     this.load.image('maya', 'assets/Maya/spr_Maya.png')
+    this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', { frameWidth: 44, frameHeight: 44 });
+
+    // Divers
+
+    this.load.image('mouseCursor', 'assets/spr_Cursor.png')
 
 }
 
 ////////// CREATE //////////
 
 function create(){
+
+    // Inputs
+    
+    cursors = this.input.keyboard.createCursorKeys()
+    click = this.input.activePointer.isDown
+
     // Backgrounds
 
     background = this.add.image(0, 0, 'background')
@@ -61,16 +78,21 @@ function create(){
 
 
     // Maya
+
     maya = this.physics.add.image(100, 100, 'maya')
-    maya.body. collideWorldBounds = true
-    cursors = this.input.keyboard.createCursorKeys()
+    maya.body.collideWorldBounds = true
+
+
+    // Divers
+
+    mouseCursor = this.add.image(game.input.mousePointer.x, game.input.mousePointer.y, 'mouseCursor')
 }
 
 ////////// UPDATE //////////
 
 function update(){
 
-    //Backgrounds
+    // Backgrounds
 
     bgSun.rotation += .0005
 
@@ -87,4 +109,30 @@ function update(){
     if(cursors.right.isDown){
         maya.setVelocityX(450)
     }
+
+    // Curseur et tir
+
+    cursorPosition()
+
+    if (this.input.activePointer.isDown)
+    {
+        mayaFire();
+    }
+
+    
+
 }
+
+function cursorPosition(){
+    mouseCursor.x = game.input.mousePointer.x
+    mouseCursor.y = game.input.mousePointer.y
+}
+
+function mayaFire(){
+    game.physics.arcade.moveToPointer(mayaBullet, 300);
+    console.log('oui')
+    console.log('x = ' + maya.x)
+    console.log('y = ' + maya.y)
+}
+
+function render(){}
