@@ -116,7 +116,7 @@ function update(){
 
     if (this.input.activePointer.isDown)
     {
-        mayaFire();
+        mayaFire()
     }
 
     
@@ -129,7 +129,7 @@ function cursorPosition(){
 }
 
 function mayaFire(){
-    game.physics.arcade.moveToPointer(mayaBullet, 300);
+    game.physics.arcade.moveToPointer(mayaBullet, 300)
     console.log('oui')
     console.log('x = ' + maya.x)
     console.log('y = ' + maya.y)
