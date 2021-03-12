@@ -19,13 +19,6 @@ const config = {
     }
 }
 
-function noscroll(){
-window.scrollTo(0, 0)
-document.body.style.overflow = 'hidden';
-}
-
-window.addEventListener("scroll", noscroll)
-
 ////////// VARIABLES //////////
 
 var game = new Phaser.Game(config)
@@ -35,7 +28,10 @@ var maya
 var mayaWeightlessness = false
 
 var mayaJumpTimer = 0
+var mayaHp = 255
+var mayaMaxHp = 255
 var mayaCanJump = false
+var mayaHasJumped = false
 var mayaStomping = false
 var mayaHasStomped = false
 
@@ -130,6 +126,9 @@ function update(){
         mayaFire()
     }
 
+    if (mayaJumpTimer > 1)
+        console.log(mayaJumpTimer)
+
 }
 
 function cursorPosition(){
@@ -143,9 +142,30 @@ function mayaFire(){
 function mayaPlatformerControll(){
 
     // Jump
-    if(cursors.up.isDown){
-        maya.setVelocityY(-1000)
+    if (maya.body.touching.down && !mayaHasJumped){                     // Si maya touche le sol et n'a pas sauté
+        mayaCanJump = true                                              // Maya peut sauter
+    }else{                                                              // Sinon
+        mayaCanJump = false                                             // Maya ne peut pas sauter
     }
+
+    if(cursors.up.isDown && !mayaStomping && mayaCanJump){              // Si on appuie sur Haut & Maya peut sauter
+        if (mayaJumpTimer <= 40){                                       // Si timer <= 40
+            mayaJumpTimer ++                                            // Timer augmente
+            maya.setVelocityY(-1000)                                    // Maya monte
+        }else{                                                          // Si timer > 40
+            mayaHasJumped = true                                        // Maya a sauté
+            console.log("Maya has jumped")
+        }
+    }
+    if(!cursors.up.isDown){                                             // Si on appuie pas sur Haut
+        if (maya.body.touching.down){                                   // Si Maya touche le sol
+            mayaHasJumped = false                                       // Maya n'a pas sauté
+            mayaJumpTimer = 0                                           // Réinitialise le timer du saut
+        } else {
+            mayaHasJumped = true
+        }
+    }
+
 
     // Left and Right
     if(cursors.left.isDown){
@@ -159,6 +179,7 @@ function mayaPlatformerControll(){
     // Stomp
     if(cursors.down.isDown){
         mayaStomping = true
+        mayaCanJump = false
     }
     
     if (mayaStomping){
@@ -168,6 +189,7 @@ function mayaPlatformerControll(){
                 console.log("STOMP")
                 mayaHasStomped = true
                 mayaStomping = false
+                mayaCanJump = true
             }
         }
 }
