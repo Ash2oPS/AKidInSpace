@@ -1,13 +1,13 @@
 ////////// CONFIG //////////
 
 const config = {
-    width: 1920,
-    height: 1080,
+    width: 1400,
+    height: 937,
     type: Phaser.AUTO,
     physics:{
         default: 'arcade',
         arcade:{
-            gravity: {y: 450},
+            gravity: {y: 4000},
             debug: true
         }
     },
@@ -32,6 +32,13 @@ var game = new Phaser.Game(config)
 var background
 var bgSun
 var maya
+var mayaWeightlessness = false
+
+var mayaJumpTimer = 0
+var mayaCanJump = false
+var mayaStomping = false
+var mayaHasStomped = false
+
 var mouseCursor
 var cursors
 var click
@@ -52,6 +59,10 @@ function preload(){
 
     this.load.image('maya', 'assets/Maya/spr_Maya.png')
     this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', { frameWidth: 44, frameHeight: 44 });
+
+    //Platforms 
+
+    this.load.image('ground', 'assets/spr_Platform1.png');
 
     // Divers
 
@@ -82,6 +93,12 @@ function create(){
     maya = this.physics.add.image(100, 100, 'maya')
     maya.body.collideWorldBounds = true
 
+    //Platforms
+
+    platforms = this.physics.add.staticGroup()
+    platforms.create(400, 937, 'ground').setScale(100, 1).refreshBody()
+    this.physics.add.collider(maya, platforms);
+
 
     // Divers
 
@@ -100,14 +117,8 @@ function update(){
 
     maya.setVelocityX(0)
 
-    if(cursors.up.isDown){
-        maya.setVelocityY(-450)
-    }
-    if(cursors.left.isDown){
-        maya.setVelocityX(-450)
-    }
-    if(cursors.right.isDown){
-        maya.setVelocityX(450)
+    if (!mayaWeightlessness){
+        mayaPlatformerControll()
     }
 
     // Curseur et tir
@@ -119,8 +130,6 @@ function update(){
         mayaFire()
     }
 
-    
-
 }
 
 function cursorPosition(){
@@ -129,10 +138,42 @@ function cursorPosition(){
 }
 
 function mayaFire(){
-    game.physics.arcade.moveToPointer(mayaBullet, 300)
-    console.log('oui')
-    console.log('x = ' + maya.x)
-    console.log('y = ' + maya.y)
 }
+
+function mayaPlatformerControll(){
+
+    // Jump
+    if(cursors.up.isDown){
+        maya.setVelocityY(-1000)
+    }
+
+    // Left and Right
+    if(cursors.left.isDown){
+        maya.setVelocityX(-450)
+    }
+
+    if(cursors.right.isDown){
+        maya.setVelocityX(450)
+    }
+
+    // Stomp
+    if(cursors.down.isDown){
+        mayaStomping = true
+    }
+    
+    if (mayaStomping){
+        maya.setVelocity(0, 3000)
+        if (maya.body.touching.down){
+            if (!mayaHasStomped){
+                console.log("STOMP")
+                mayaHasStomped = true
+                mayaStomping = false
+            }
+        }
+}
+
+}
+
+
 
 function render(){}
