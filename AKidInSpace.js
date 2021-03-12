@@ -28,6 +28,7 @@ var maya
 var mayaWeightlessness = false
 
 var mayaJumpTimer = 0
+var mayaJumpVector = 0
 var mayaSens = 1
 var mayaHp = 255
 var mayaMaxHp = 255
@@ -150,10 +151,21 @@ function mayaPlatformerControll(){
 
     if(cursors.up.isDown && mayaCanJump){                               // Si on appuie sur Haut & Maya peut sauter
         mayaHasJumped = true                                            // Maya a sauté
-        if (mayaJumpTimer <= 40){                                       // Si timer <= 40
+        if (mayaJumpTimer <= 20){                                       // Si timer <= 40
             mayaJumpTimer ++                                            // Timer augmente
-            maya.setVelocityY(-800)                                     // Maya monte
+            maya.setVelocityY(-800 + mayaJumpVector)                                     // Maya monte
+            mayaJumpVector += 5
+        } else if (mayaJumpTimer <= 30){
+            mayaJumpTimer ++
+            maya.setVelocityY(-800 + mayaJumpVector)
+            mayaJumpVector += 10
+        } else if (mayaJumpTimer <= 40){
+            mayaJumpTimer ++
+            maya.setVelocityY(-800 + mayaJumpVector)
+            mayaJumpVector += 20
         }
+    } else{
+        mayaJumpVector = 0
     }
     if(!cursors.up.isDown){                                             // Si on appuie pas sur Haut
         if (maya.body.touching.down){                                   // Si Maya touche le sol
