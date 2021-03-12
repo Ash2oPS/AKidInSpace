@@ -28,6 +28,7 @@ var maya
 var mayaWeightlessness = false
 
 var mayaJumpTimer = 0
+var mayaSens = 1
 var mayaHp = 255
 var mayaMaxHp = 255
 var mayaCanJump = false
@@ -126,9 +127,6 @@ function update(){
         mayaFire()
     }
 
-    if (mayaJumpTimer > 1)
-        console.log(mayaJumpTimer)
-
 }
 
 function cursorPosition(){
@@ -144,24 +142,23 @@ function mayaPlatformerControll(){
     // Jump
     if (maya.body.touching.down && !mayaHasJumped){                     // Si maya touche le sol et n'a pas sauté
         mayaCanJump = true                                              // Maya peut sauter
-    }else{                                                              // Sinon
+    }else if (!maya.body.touching.down && mayaHasJumped && cursors.up.isDown){  // Sinon si elle touche pas le sol si elle a sauté mais que le bouton haut est enfoncé                                                          // Sinon
+        mayaCanJump = true                                              // Maya peut sauter
+    } else{                                                             // Sinon
         mayaCanJump = false                                             // Maya ne peut pas sauter
     }
 
     if(cursors.up.isDown && mayaCanJump){                               // Si on appuie sur Haut & Maya peut sauter
         mayaHasJumped = true                                            // Maya a sauté
-        console.log("Maya has jumped")
         if (mayaJumpTimer <= 40){                                       // Si timer <= 40
             mayaJumpTimer ++                                            // Timer augmente
-            maya.setVelocityY(-1000)                                    // Maya monte
+            maya.setVelocityY(-800)                                     // Maya monte
         }
     }
     if(!cursors.up.isDown){                                             // Si on appuie pas sur Haut
         if (maya.body.touching.down){                                   // Si Maya touche le sol
             mayaHasJumped = false                                       // Maya n'a pas sauté
             mayaJumpTimer = 0                                           // Réinitialise le timer du saut
-        } else {
-            mayaHasJumped = true
         }
     }
 
@@ -176,24 +173,19 @@ function mayaPlatformerControll(){
     }
 
     // Stomp
-    if(cursors.down.isDown){
-        mayaStomping = true
-        mayaCanJump = false
+    if(cursors.down.isDown && !maya.body.touching.down && !mayaStomping){  // Si Bas est appuyé, si Maya ne touche pas le sol et qu'elle n'esrt pas déjà en train de stomper
+        mayaStomping = true                                             // Maya est en train de stomper (ça veut pas dire grand-chose mais tant pis, je trouve pas la traduction FR, mais bon, d'un autre côté, tout le monde comprend, enfin je crois, sinon, bah tant pis)
+        mayaCanJump = false                                             // Maya ne peut pas sauter
     }
     
-    if (mayaStomping){
-        mayaCanJump = false
-        maya.setVelocity(0, 3000)
-        if (maya.body.touching.down){
-            if (!mayaHasStomped){
-                console.log("STOMP")
-                mayaHasStomped = true
-                mayaStomping = false
-            } else{
-                mayaCanJump = true
-            }
+    if (mayaStomping){                                                  // Si Maya est en train de stomper                                             
+        maya.setVelocity(0, 3000)                                       // Maya charge le sol en annulant les autres directions
+        if (maya.body.touching.down){                                   // Si Maya entre en contact avec le sol                              
+            mayaStomping = false
         }
-}
+    } else {
+        mayaHasStomped = false
+    }
 
 }
 
