@@ -148,13 +148,12 @@ function mayaPlatformerControll(){
         mayaCanJump = false                                             // Maya ne peut pas sauter
     }
 
-    if(cursors.up.isDown && !mayaStomping && mayaCanJump){              // Si on appuie sur Haut & Maya peut sauter
+    if(cursors.up.isDown && mayaCanJump){                               // Si on appuie sur Haut & Maya peut sauter
+        mayaHasJumped = true                                            // Maya a sauté
+        console.log("Maya has jumped")
         if (mayaJumpTimer <= 40){                                       // Si timer <= 40
             mayaJumpTimer ++                                            // Timer augmente
             maya.setVelocityY(-1000)                                    // Maya monte
-        }else{                                                          // Si timer > 40
-            mayaHasJumped = true                                        // Maya a sauté
-            console.log("Maya has jumped")
         }
     }
     if(!cursors.up.isDown){                                             // Si on appuie pas sur Haut
@@ -183,12 +182,14 @@ function mayaPlatformerControll(){
     }
     
     if (mayaStomping){
+        mayaCanJump = false
         maya.setVelocity(0, 3000)
         if (maya.body.touching.down){
             if (!mayaHasStomped){
                 console.log("STOMP")
                 mayaHasStomped = true
                 mayaStomping = false
+            } else{
                 mayaCanJump = true
             }
         }
