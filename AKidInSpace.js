@@ -44,6 +44,10 @@ var mayaBullet
 var mayaShootRate = 30
 var mayaShootSpeed = 20
 
+this.mayaBullets = this.physics.add.group({
+    allowGravity: false;
+}); 
+
 ////////// PRELOAD //////////
 
 function preload(){
@@ -56,7 +60,8 @@ function preload(){
     // Acteurs actifs
 
     this.load.image('maya', 'assets/Maya/spr_Maya.png')
-    this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', { frameWidth: 44, frameHeight: 44 });
+    //this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', { frameWidth: 44, frameHeight: 44 });
+    this.load.image('mayaBullet', 'assets/Maya/spr_MayaBullet.png');
 
     //Platforms 
 
@@ -125,8 +130,46 @@ function update(){
 
     if (this.input.activePointer.isDown)
     {
-        mayaFire()
+        mayaFire(this);
+        //if (Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBullet.getBounds()) == false)
+        
     }
+
+    if (mayaBullet != null){
+        console.log(Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBullet.getBounds()));
+    }
+
+    /*
+   
+     const goombaObjects = this.map.getObjectLayer('goomba').objects;
+
+
+    for (const goomba of goombaObjects) {
+    this.goombas.create(goomba.x, goomba.y-11, 'atlas')
+        .setOrigin(0.5,0.5)
+        .setDepth(-1)
+        .setScale(1.5)
+        .setGravityY(1000)
+}
+
+    
+    for (const goomba of this.goombas.children.entries) {
+      goomba.direction = 'RIGHT';
+        goomba.isDed = false;
+}  
+   this.collider = this.physics.add.collider(player, this.goombas, this.death, null, this)
+   this.physics.add.collider(this.goombas, platform);
+   this.physics.add.collider(this.goombas, platformIce);
+   this.physics.add.collider(this.goombas, platformSnow);
+   this.physics.add.collider(this.goombas, platformMontagne);
+   this.physics.add.collider(this.goombas, this.goombas);
+   */
+
+
+        
+        
+
+////////// FONTIONS //////////
 
 }
 
@@ -135,7 +178,11 @@ function cursorPosition(){
     mouseCursor.y = game.input.mousePointer.y
 }
 
-function mayaFire(){
+function mayaFire(context){
+    mayaBullet = context.physics.add.sprite(maya.x, maya.y, 'mayaBullet');
+    mayaBullet.body.setAllowGravity(false);
+    mayaBullet.checkWorldBounds = true;
+    context.physics.moveTo(mayaBullet, mouseCursor.x, mouseCursor.y, 3000);
 }
 
 function mayaPlatformerControll(){
