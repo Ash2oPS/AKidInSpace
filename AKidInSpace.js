@@ -8,7 +8,7 @@ const config = {
         default: 'arcade',
         arcade:{
             gravity: {y: 4000},
-            debug: true
+            debug: false
         }
     },
     scene:{
@@ -41,10 +41,14 @@ var mouseCursor
 var cursors
 var click
 var mayaBullet
-var mayaBulletGroup = this.add.group();
-mayaBulletGroup.add(mayaBulletGroup);
-var mayaShootRate = 30
-var mayaShootSpeed = 20
+//var mayaBulletGroup = this.add.group();
+//mayaBulletGroup.add(mayaBulletGroup);
+var mayaShootTypeUnlocked = false;
+var mayaShootType = 0;
+var mayaShootRate = 40;
+var mayaShootRateCount = 0;
+var mayaShootSpeed = 1500;
+var mayaCanShoot = true;
 
 ////////// PRELOAD //////////
 
@@ -57,9 +61,9 @@ function preload(){
 
     // Acteurs actifs
 
-    this.load.image('maya', 'assets/Maya/spr_Maya.png')
+    this.load.spritesheet('maya', 'assets/Maya/sprsht_MayaIdle.png', {frameWidth : 256, frameHeight : 256});
     //this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', { frameWidth: 44, frameHeight: 44 });
-    this.load.image('mayaBullet', 'assets/Maya/spr_MayaBullet.png');
+    this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', {frameWidth : 44, frameHeight : 44});
 
     //Platforms 
 
@@ -91,8 +95,54 @@ function create(){
 
     // Maya
 
-    maya = this.physics.add.image(100, 100, 'maya')
+    maya = this.physics.add.sprite(100, 100, 'maya').setDepth(1)
     maya.body.collideWorldBounds = true
+
+    this.anims.create({
+        key :'maya_Idle1',
+        frames : this.anims.generateFrameNumbers('maya', {start :0, end: 5}),
+        frameRate : 5,
+        repeat : -1
+    })
+
+    // Maya Bullets
+
+    this.anims.create({
+        key :'mayaBulletShot1',
+        frames : this.anims.generateFrameNumbers('mayaBullet', {start :0, end: 2}),
+        frameRate : 7,
+        repeat : -1
+    })
+    this.anims.create({
+        key :'mayaBulletShot2',
+        frames : this.anims.generateFrameNumbers('mayaBullet', {start :3, end: 5}),
+        frameRate : 7,
+        repeat : -1
+    })
+    this.anims.create({
+        key :'mayaBulletShot3',
+        frames : this.anims.generateFrameNumbers('mayaBullet', {start :6, end: 8}),
+        frameRate : 7,
+        repeat : -1
+    })
+    this.anims.create({
+        key :'mayaBulletShot4',
+        frames : this.anims.generateFrameNumbers('mayaBullet', {start :9, end: 11}),
+        frameRate : 7,
+        repeat : -1
+    })
+    this.anims.create({
+        key :'mayaBulletShot5',
+        frames : this.anims.generateFrameNumbers('mayaBullet', {start :12, end: 14}),
+        frameRate : 7,
+        repeat : -1
+    })
+    this.anims.create({
+        key :'mayaBulletShot6',
+        frames : this.anims.generateFrameNumbers('mayaBullet', {start :15, end: 17}),
+        frameRate : 7,
+        repeat : -1
+    })
 
     //Platforms
 
@@ -119,7 +169,7 @@ function update(){
     maya.setVelocityX(0)
 
     if (!mayaWeightlessness){
-        mayaPlatformerControll()
+        mayaPlatformerControll(this)
     }
 
     // Curseur et tir
@@ -129,12 +179,20 @@ function update(){
     if (this.input.activePointer.isDown)
     {
         mayaFire(this);
-        //if (Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBulletGroup.getBounds()) == false)
         
     }
 
-    if (mayaBulletGroup != null){
-        console.log(Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBulletGroup.getBounds()));
+    if (!mayaCanShoot){
+        if (mayaShootRateCount < mayaShootRate){
+            mayaShootRateCount ++;
+        } else {
+            mayaCanShoot = true;
+            mayaShootRateCount = 0;
+        }
+    }
+
+    if (mayaBullet != null){
+        //console.log(Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBullet.getBounds()));
     }
 
 
@@ -148,13 +206,54 @@ function cursorPosition(){
 }
 
 function mayaFire(context){
-    mayaBulletGroup = context.physics.add.sprite(maya.x, maya.y, 'mayaBullet');
-    mayaBulletGroup.body.setAllowGravity(false);
-    mayaBulletGroup.checkWorldBounds = true;
-    context.physics.moveTo(mayaBulletGroup, mouseCursor.x, mouseCursor.y, 3000);
+    if (mayaCanShoot){
+
+        mayaCanShoot = false;
+
+        if (!mayaShootTypeUnlocked){
+            mayaShootType = 0;    
+        }
+
+        console.log(mayaShootType)
+
+        mayaBullet = context.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaBullet');
+        mayaBullet.rotation = Phaser.Math.Angle.BetweenPoints(mayaBullet, mouseCursor);
+        mayaBullet.body.setAllowGravity(false);
+        mayaBullet.checkWorldBounds = true;
+        context.physics.angleTo;
+        context.physics.moveTo(mayaBullet, mouseCursor.x, mouseCursor.y, mayaShootSpeed);
+
+
+        if (mayaShootType == 0){
+            mayaBullet.play('mayaBulletShot1');
+        } else if (mayaShootType == 1){
+            mayaBullet.play('mayaBulletShot2');
+        } else if (mayaShootType == 2){
+            mayaBullet.play('mayaBulletShot3');
+        } else if (mayaShootType == 3){
+            mayaBullet.play('mayaBulletShot4');
+        } else if (mayaShootType == 4){
+            mayaBullet.play('mayaBulletShot5');
+        } else if (mayaShootType == 5){
+            mayaBullet.play('mayaBulletShot6');
+        }
+
+        if (mayaShootTypeUnlocked){
+            mayaShootRate = 2;
+            mayaShootType ++;
+            if (mayaShootType >= 6)
+                mayaShootType = 0;  
+        } else {
+            mayaShootRate = 40;
+        }
+    }
 }
 
-function mayaPlatformerControll(){
+function mayaPlatformerControll(context){
+
+    if (!maya.body.touching.down){
+        maya.play('maya_Idle1')
+    }
 
     // Jump
     if (maya.body.touching.down && !mayaHasJumped){                     // Si maya touche le sol et n'a pas sauté
