@@ -25,6 +25,7 @@ var game = new Phaser.Game(config)
 var background
 var bgSun
 var maya
+var mayaCanon
 var mayaWeightlessness = false
 
 var mayaJumpTimer = 0
@@ -43,7 +44,7 @@ var click
 var mayaBullet
 //var mayaBulletGroup = this.add.group();
 //mayaBulletGroup.add(mayaBulletGroup);
-var mayaShootTypeUnlocked = false;
+var mayaShootTypeUnlocked = true;
 var mayaShootType = 0;
 var mayaShootRate = 40;
 var mayaShootRateCount = 0;
@@ -63,6 +64,7 @@ function preload(){
 
     this.load.spritesheet('maya', 'assets/Maya/sprsht_MayaIdle.png', {frameWidth : 256, frameHeight : 256});
     //this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', { frameWidth: 44, frameHeight: 44 });
+    this.load.image('mayaCanon', 'assets/Maya/canon.png');
     this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', {frameWidth : 44, frameHeight : 44});
 
     //Platforms 
@@ -97,6 +99,8 @@ function create(){
 
     maya = this.physics.add.sprite(100, 100, 'maya').setDepth(1)
     maya.body.collideWorldBounds = true
+    mayaCanon = this.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaCanon').setDepth(0.9)
+    mayaCanon.body.setAllowGravity(false);
 
     this.anims.create({
         key :'maya_Idle1',
@@ -191,12 +195,16 @@ function update(){
         }
     }
 
+    mayaCanon.x = maya.x - 20;
+    mayaCanon.y = maya.y - 51;
+    mayaCanon.rotation = Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor);
+
     if (mayaBullet != null){
         //console.log(Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBullet.getBounds()));
     }
 
 
-////////// FONTIONS //////////
+////////// FONCTIONS //////////
 
 }
 
