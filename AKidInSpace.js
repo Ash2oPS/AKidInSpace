@@ -1,8 +1,11 @@
 ////////// CONFIG //////////
 
+const screenWidth = 1920;
+const screenHeight = 1080;
+
 const config = {
-    width: 1400,
-    height: 937,
+    width: screenWidth,
+    height: screenHeight,
     type: Phaser.AUTO,
     physics:{
         default: 'arcade',
@@ -14,14 +17,19 @@ const config = {
     scene:{
         preload: preload,
         create: create,
-        update: update,
-        render: render
+        update: update
+        //render: render
     }
 }
 
 ////////// VARIABLES //////////
 
 var game = new Phaser.Game(config)
+
+var introScreen;
+var introScreenCount = 0;
+var beginPlay = false;
+
 var background
 var bgSun
 var maya
@@ -30,7 +38,7 @@ var mayaWeightlessness = false
 
 var mayaJumpTimer = 0
 var mayaJumpVector = 0
-var mayaSens = 1
+var mayaOrientation = 1
 var mayaHp = 255
 var mayaMaxHp = 255
 var mayaCanJump = false
@@ -39,17 +47,20 @@ var mayaStomping = false
 var mayaHasStomped = false
 
 var mouseCursor
+var mouseCursorTrueXY
 var cursors
 var click
 var mayaBullet
 //var mayaBulletGroup = this.add.group();
 //mayaBulletGroup.add(mayaBulletGroup);
-var mayaShootTypeUnlocked = true;
+var mayaShootTypeUnlocked = false;
 var mayaShootType = 0;
 var mayaShootRate = 40;
 var mayaShootRateCount = 0;
 var mayaShootSpeed = 1500;
 var mayaCanShoot = true;
+
+
 
 ////////// PRELOAD //////////
 
@@ -75,30 +86,40 @@ function preload(){
 
     this.load.image('mouseCursor', 'assets/spr_Cursor.png')
 
+    // Intro
+
+    this.load.image('intro', 'assets/introScreen.png');
+
 }
 
 ////////// CREATE //////////
 
 function create(){
-
+    
     // Inputs
     
-    cursors = this.input.keyboard.createCursorKeys()
+    cursors = this.input.keyboard.addKeys(
+        {up:Phaser.Input.Keyboard.KeyCodes.SPACE,
+        down:Phaser.Input.Keyboard.KeyCodes.S,
+        left:Phaser.Input.Keyboard.KeyCodes.Q,
+        right:Phaser.Input.Keyboard.KeyCodes.D});
     click = this.input.activePointer.isDown
 
     // Backgrounds
 
     background = this.add.image(0, 0, 'background')
-    background.setOrigin(0, 0)
+    .setScrollFactor(0)
+    .setOrigin(0, 0);
 
     bgSun = this.add.image(1400, 320, 'bgSun')
+    .setScrollFactor(0.1)
 
 
 
     // Maya
 
-    maya = this.physics.add.sprite(100, 100, 'maya').setDepth(1)
-    maya.body.collideWorldBounds = true
+    maya = this.physics.add.sprite(1200, 400, 'maya').setDepth(1)
+    maya.body.collideWorldBounds = false;
     mayaCanon = this.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaCanon').setDepth(0.9)
     mayaCanon.body.setAllowGravity(false);
 
@@ -158,64 +179,91 @@ function create(){
     // Divers
 
     mouseCursor = this.add.image(game.input.mousePointer.x, game.input.mousePointer.y, 'mouseCursor')
+    .setScrollFactor(1);
+
+    //mouseCursorTrueXY = this.add.image(game.input.mousePointer.x, game.input.mousePointer.y, 'mouseCursor')
+    //.alpha = 0;
+
+    // Intro
+
+    introScreen = this.add.image(0, 0, 'intro')
+    .setScrollFactor(0)
+    .setOrigin(0, 0)
+    .setDepth(1);
+
+    // Camera
+
+    this.cameras.main.startFollow(maya);
+    this.cameras.main.setBounds(0, 0, maya.widthInPixels, maya.heightInPixels);
+
 }
 
 ////////// UPDATE //////////
 
 function update(){
 
-    // Backgrounds
+    if(!beginPlay)
+        intro();
+    else{
 
-    bgSun.rotation += .0005
+        // Backgrounds
 
-    // Maya
+        bgSun.rotation += .0005
 
-    maya.setVelocityX(0)
+        // Maya
 
-    if (!mayaWeightlessness){
-        mayaPlatformerControll(this)
-    }
+        maya.setVelocityX(0)
 
-    // Curseur et tir
-
-    cursorPosition()
-
-    if (this.input.activePointer.isDown)
-    {
-        mayaFire(this);
-        
-    }
-
-    if (!mayaCanShoot){
-        if (mayaShootRateCount < mayaShootRate){
-            mayaShootRateCount ++;
-        } else {
-            mayaCanShoot = true;
-            mayaShootRateCount = 0;
+        if (!mayaWeightlessness){
+            mayaPlatformerControl(this)
         }
+
+        // Curseur et tir
+
+        cursorPosition()
+
+        if (this.input.activePointer.isDown)
+        {
+            mayaFire(this);
+            
+        }
+
+        if (!mayaCanShoot){
+            if (mayaShootRateCount < mayaShootRate){
+                mayaShootRateCount ++;
+            } else {
+                mayaCanShoot = true;
+                mayaShootRateCount = 0;
+            }
+        }
+
+        mayaCanon.x = maya.x - 20 * mayaOrientation;    // le canon suit Maya avec une frame de retard 
+        mayaCanon.y = maya.y - 51;                      // Dans l'idéal, il faudrait dire que Canon est enfant de Maya ?
+        mayaCanon.rotation = Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor);
+
+        if (mayaBullet != null){
+            //console.log(Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBullet.getBounds()));
+        }
+
     }
 
-    mayaCanon.x = maya.x - 20;
-    mayaCanon.y = maya.y - 51;
-    mayaCanon.rotation = Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor);
-
-    if (mayaBullet != null){
-        //console.log(Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBullet.getBounds()));
-    }
+}
 
 
 ////////// FONCTIONS //////////
 
-}
 
 function cursorPosition(){
-    mouseCursor.x = game.input.mousePointer.x
-    mouseCursor.y = game.input.mousePointer.y
+    mouseCursor.x = game.input.mousePointer.x + maya.x - (screenWidth/2)
+    mouseCursor.y = game.input.mousePointer.y + maya.y - (screenHeight/2)
+
+    //mouseCursorTrueXY.x = game.input.mousePointer.x
+    //mouseCursorTrueXY.y = game.input.mousePointer.y
 }
 
 function mayaFire(context){
     if (mayaCanShoot){
-
+        console.log(mouseCursor)
         mayaCanShoot = false;
 
         if (!mayaShootTypeUnlocked){
@@ -224,7 +272,7 @@ function mayaFire(context){
 
         console.log(mayaShootType)
 
-        mayaBullet = context.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaBullet');
+        mayaBullet = context.physics.add.sprite(maya.x - 20 * mayaOrientation, maya.y - 51, 'mayaBullet');
         mayaBullet.rotation = Phaser.Math.Angle.BetweenPoints(mayaBullet, mouseCursor);
         mayaBullet.body.setAllowGravity(false);
         mayaBullet.checkWorldBounds = true;
@@ -257,7 +305,7 @@ function mayaFire(context){
     }
 }
 
-function mayaPlatformerControll(context){
+function mayaPlatformerControl(context){
 
     if (!maya.body.touching.down){
         maya.play('maya_Idle1')
@@ -301,10 +349,14 @@ function mayaPlatformerControll(context){
     // Left and Right
     if(cursors.left.isDown){
         maya.setVelocityX(-450)
+        if (mayaOrientation == 1)
+            mayaOrientation = -1
     }
 
     if(cursors.right.isDown){
         maya.setVelocityX(450)
+        if (mayaOrientation == -1)
+            mayaOrientation = 1
     }
 
     // Stomp
@@ -324,6 +376,17 @@ function mayaPlatformerControll(context){
 
 }
 
+function intro(){
+    introScreenCount ++;
+    if (introScreenCount >= 240 && introScreenCount < 340)
+        introScreen.alpha -= 0.01
+    else if (introScreenCount >= 340)
+        beginPlay = true;
+        //console.log("play")
+}
 
 
-function render(){}
+
+/*function render(){
+    
+}*/
