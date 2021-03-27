@@ -11,7 +11,7 @@ const config = {
         default: 'arcade',
         arcade:{
             gravity: {y: 4000},
-            debug: false
+            debug: true
         }
     },
     scene:{
@@ -26,17 +26,22 @@ const config = {
 
 var game = new Phaser.Game(config)
 
+var debugText
+
 var introScreen;
 var introScreenCount = 0;
 var beginPlay = false;
 
 var background
 var bgSun
+var bgStars1
+var bgStars2
 var maya
 var mayaCanon
 var mayaWeightlessness = false
 
 var mayaJumpTimer = 0
+var mayaJumpTimerBuffer = -1
 var mayaJumpVector = 0
 var mayaOrientation = 1
 var mayaHp = 255
@@ -53,11 +58,11 @@ var click
 var mayaBullet
 //var mayaBulletGroup = this.add.group();
 //mayaBulletGroup.add(mayaBulletGroup);
-var mayaShootTypeUnlocked = false;
+var mayaShootTypeUnlocked = true;
 var mayaShootType = 0;
 var mayaShootRate = 40;
 var mayaShootRateCount = 0;
-var mayaShootSpeed = 1500;
+var mayaShootSpeed = 2000;
 var mayaCanShoot = true;
 
 
@@ -70,7 +75,8 @@ function preload(){
 
     this.load.image('background', 'assets/spr_Background.png')
     this.load.image('bgSun', 'assets/spr_Soleil.png')
-
+    this.load.image('bgStars1', 'assets/spr_Etoiles1.png')
+    this.load.image('bgStars2', 'assets/spr_Etoiles2.png')
     // Acteurs actifs
 
     this.load.spritesheet('maya', 'assets/Maya/sprsht_MayaIdle.png', {frameWidth : 256, frameHeight : 256});
@@ -95,6 +101,19 @@ function preload(){
 ////////// CREATE //////////
 
 function create(){
+
+    // DEBUG TEXT
+    if (config.physics.arcade.debug){
+        debugText = this.add.text(100, 100,"debug", {
+            fontSize: '18px',
+            padding: { x: 10, y: 5 },
+            backgroundColor: '#000000',
+            fill: '#ffffff'
+        });
+        debugText.setScrollFactor(0)
+        .setOrigin(0, 0)
+        .setDepth(2);
+    }
     
     // Inputs
     
@@ -112,7 +131,15 @@ function create(){
     .setOrigin(0, 0);
 
     bgSun = this.add.image(1400, 320, 'bgSun')
-    .setScrollFactor(0.1)
+    .setScrollFactor(0.15);
+
+    bgStars1 = this.add.image(0, 0, 'bgStars1')
+    .setScrollFactor(0.03)
+    .setOrigin(0,0);
+
+    bgStars2 = this.add.image(0, 0, 'bgStars2')
+    .setScrollFactor(0.07)
+    .setOrigin(0,0);
 
 
 
@@ -172,7 +199,7 @@ function create(){
     //Platforms
 
     platforms = this.physics.add.staticGroup()
-    platforms.create(400, 937, 'ground').setScale(100, 1).refreshBody()
+    platforms.create(400, 1100, 'ground').setScale(100, 1).refreshBody()
     this.physics.add.collider(maya, platforms);
 
 
@@ -202,9 +229,23 @@ function create(){
 
 function update(){
 
+
+    // DEBUG TEXT
+    if (config.physics.arcade.debug){
+        debugText.setText('maya Touching Down : ' + maya.body.touching.down + '    maya Blocked Down : ' + maya.body.touching.down + 
+        '\nmaya can Jump : ' + mayaCanJump + '    maya has Jumped : ' + mayaHasJumped + 
+        '\nmaya Jump Timer : ' + mayaJumpTimer + '    maya Jump Timer Buffer : ' + mayaJumpTimerBuffer
+        );
+    }
+
+    //
+
     if(!beginPlay)
         intro();
     else{
+
+        if (introScreenCount >= 240 && introScreenCount < 340)
+            introScreen.alpha -= 0.01;
 
         // Backgrounds
 
@@ -215,6 +256,9 @@ function update(){
         maya.setVelocityX(0)
 
         if (!mayaWeightlessness){
+            if (!maya.body.touching.down || !maya.body.blocked.down){
+                maya.play('maya_Idle1')
+            }
             mayaPlatformerControl(this)
         }
 
@@ -241,9 +285,6 @@ function update(){
         mayaCanon.y = maya.y - 51;                      // Dans l'idéal, il faudrait dire que Canon est enfant de Maya ?
         mayaCanon.rotation = Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor);
 
-        if (mayaBullet != null){
-            //console.log(Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, mayaBullet.getBounds()));
-        }
 
     }
 
@@ -263,14 +304,12 @@ function cursorPosition(){
 
 function mayaFire(context){
     if (mayaCanShoot){
-        console.log(mouseCursor)
         mayaCanShoot = false;
 
         if (!mayaShootTypeUnlocked){
             mayaShootType = 0;    
         }
 
-        console.log(mayaShootType)
 
         mayaBullet = context.physics.add.sprite(maya.x - 20 * mayaOrientation, maya.y - 51, 'mayaBullet');
         mayaBullet.rotation = Phaser.Math.Angle.BetweenPoints(mayaBullet, mouseCursor);
@@ -295,7 +334,7 @@ function mayaFire(context){
         }
 
         if (mayaShootTypeUnlocked){
-            mayaShootRate = 2;
+            mayaShootRate = 1;
             mayaShootType ++;
             if (mayaShootType >= 6)
                 mayaShootType = 0;  
@@ -307,42 +346,22 @@ function mayaFire(context){
 
 function mayaPlatformerControl(context){
 
-    if (!maya.body.touching.down){
-        maya.play('maya_Idle1')
-    }
 
     // Jump
-    if (maya.body.touching.down && !mayaHasJumped){                     // Si maya touche le sol et n'a pas sauté
-        mayaCanJump = true                                              // Maya peut sauter
-    }else if (!maya.body.touching.down && mayaHasJumped && cursors.up.isDown){  // Sinon si elle touche pas le sol si elle a sauté mais que le bouton haut est enfoncé                                                          // Sinon
-        mayaCanJump = true                                              // Maya peut sauter
-    } else{                                                             // Sinon
-        mayaCanJump = false                                             // Maya ne peut pas sauter
+    if (maya.body.touching.down && !mayaHasJumped && !cursors.down.isDown){                     // Si maya touche le sol et n'a pas sauté
+        mayaCanJump = true                                              // Maya peut sauter                                            // Maya peut sauter 
+    }else{
+        mayaCanJump = false;                           // Maya ne peut pas sauter
     }
 
-    if(cursors.up.isDown && mayaCanJump){                               // Si on appuie sur Haut & Maya peut sauter
-        mayaHasJumped = true                                            // Maya a sauté
-        if (mayaJumpTimer <= 20){                                       // Si timer <= 40
-            mayaJumpTimer ++                                            // Timer augmente
-            maya.setVelocityY(-800 + mayaJumpVector)                                     // Maya monte
-            mayaJumpVector += 5
-        } else if (mayaJumpTimer <= 30){
-            mayaJumpTimer ++
-            maya.setVelocityY(-800 + mayaJumpVector)
-            mayaJumpVector += 10
-        } else if (mayaJumpTimer <= 40){
-            mayaJumpTimer ++
-            maya.setVelocityY(-800 + mayaJumpVector)
-            mayaJumpVector += 20
-        }
-    } else{
-        mayaJumpVector = 0
+    if(cursors.up.isDown && mayaCanJump){                                  
+        maya.setVelocityY(-1500)
+        mayaHasJumped = true
     }
-    if(!cursors.up.isDown){                                             // Si on appuie pas sur Haut
-        if (maya.body.touching.down){                                   // Si Maya touche le sol
-            mayaHasJumped = false                                       // Maya n'a pas sauté
-            mayaJumpTimer = 0                                           // Réinitialise le timer du saut
-        }
+
+
+    if(!cursors.up.isDown && maya.body.touching.down){                                             // Si on appuie pas sur Haut
+        mayaHasJumped = false                                       // Maya n'a pas sauté
     }
 
 
@@ -350,13 +369,15 @@ function mayaPlatformerControl(context){
     if(cursors.left.isDown){
         maya.setVelocityX(-450)
         if (mayaOrientation == 1)
-            mayaOrientation = -1
+            mayaOrientation = -1;
+            maya.flipX = true;
     }
 
     if(cursors.right.isDown){
         maya.setVelocityX(450)
         if (mayaOrientation == -1)
             mayaOrientation = 1
+            maya.flipX = false;
     }
 
     // Stomp
@@ -378,11 +399,10 @@ function mayaPlatformerControl(context){
 
 function intro(){
     introScreenCount ++;
-    if (introScreenCount >= 240 && introScreenCount < 340)
-        introScreen.alpha -= 0.01
-    else if (introScreenCount >= 340)
+    if (introScreenCount == 239){
         beginPlay = true;
-        //console.log("play")
+        introScreenCount ++;
+    }
 }
 
 
