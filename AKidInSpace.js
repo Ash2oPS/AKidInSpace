@@ -232,7 +232,7 @@ function update(){
 
     // DEBUG TEXT
     if (config.physics.arcade.debug){
-        debugText.setText('maya Touching Down : ' + maya.body.touching.down + '    maya Blocked Down : ' + maya.body.touching.down + 
+        debugText.setText('maya Touching Down : ' + maya.body.touching.down + '    maya weightlessness : ' + mayaWeightlessness + 
         '\nmaya can Jump : ' + mayaCanJump + '    maya has Jumped : ' + mayaHasJumped + 
         '\nmaya Jump Timer : ' + mayaJumpTimer + '    maya Jump Timer Buffer : ' + mayaJumpTimerBuffer
         );
@@ -256,9 +256,9 @@ function update(){
         maya.setVelocityX(0)
 
         if (!mayaWeightlessness){
-            if (!maya.body.touching.down || !maya.body.blocked.down){
-                maya.play('maya_Idle1')
-            }
+            if (!maya.body.touching.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
+                maya.play('maya_Idle1')                 // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
+            }                                           // qu'après avoir sauté une première fois
             mayaPlatformerControl(this)
         }
 
