@@ -24,39 +24,39 @@ const config = {
 
 ////////// VARIABLES //////////
 
-var game = new Phaser.Game(config)
+var game = new Phaser.Game(config);
 
-var debugText
+var debugText;
 
 var introScreen;
 var introScreenCount = 0;
 var beginPlay = false;
 
-var background
-var bgSun
-var bgStars1
-var bgStars2
-var maya
-var mayaCanon
-var mayaWeightlessness = false
+var background;
+var bgSun;
+var bgStars1;
+var bgStars2;
+var maya;
+var mayaCanon;
+var mayaWeightlessness = false;
 
-var mayaJumpTimer = 0
-var mayaJumpTimerBuffer = -1
-var mayaJumpVector = 0
-var mayaOrientation = 1
-var mayaHp = 255
-var mayaMaxHp = 255
-var mayaCanJump = false
-var mayaHasJumped = false
-var mayaStomping = false
-var mayaHasStomped = false
+var mayaJumpTimer = 0;
+var mayaJumpTimerBuffer = -1;
+var mayaJumpVector = 0;
+var mayaOrientation = 1;
+var mayaHp = 255;
+var mayaMaxHp = 255;
+var mayaCanJump = false;
+var mayaHasJumped = false;
+var mayaStomping = false;
+var mayaHasStomped = false;
 
-var mouseCursor
-var mouseCursorTrueXY
-var cursors
-var click
-var mayaBullet
-var mayaBulletGroup
+var mouseCursor;
+var mouseCursorTrueXY;
+var cursors;
+var click;
+var mayaBullet;
+var mayaBulletGroup;
 var mayaShootTypeUnlocked = true;
 var mayaShootType = 0;
 var mayaShootRate = 40;
@@ -84,10 +84,10 @@ function preload(){
 
     // Backgrounds
 
-    this.load.image('background', 'assets/spr_Background.png')
-    this.load.image('bgSun', 'assets/spr_Soleil.png')
-    this.load.image('bgStars1', 'assets/spr_Etoiles1.png')
-    this.load.image('bgStars2', 'assets/spr_Etoiles2.png')
+    this.load.image('background', 'assets/spr_Background.png');
+    this.load.image('bgSun', 'assets/spr_Soleil.png');
+    this.load.image('bgStars1', 'assets/spr_Etoiles1.png');
+    this.load.image('bgStars2', 'assets/spr_Etoiles2.png');
     // Acteurs actifs
 
     this.load.spritesheet('maya', 'assets/Maya/sprsht_MayaIdle.png', {frameWidth : 256, frameHeight : 256});
@@ -139,7 +139,7 @@ function create(){
         down:Phaser.Input.Keyboard.KeyCodes.S,
         left:Phaser.Input.Keyboard.KeyCodes.Q,
         right:Phaser.Input.Keyboard.KeyCodes.D});
-    click = this.input.activePointer.isDown
+    click = this.input.activePointer.isDown;
 
     // Backgrounds
 
@@ -164,22 +164,35 @@ function create(){
     const tileset = map.addTilesetImage('TILED1', 'tiles');
 
     var spaceBG0_Layer = map.createLayer('SpaceBG0', tileset);
-    var mursBg_Layer =map.createLayer('MursBg', tileset);
-    var details_Layer =map.createLayer('Details', tileset);
-    var degrades_Layer =map.createLayer('Degrades', tileset);
-    var pics_Layer =map.createLayer('Pics', tileset);
-    var picsDegrades_Layer =map.createLayer('PicsDegrades', tileset);
-    var platforms_Layer =map.createLayer('Platforms', tileset);
-    var mursExternes_Layer =map.createLayer('MursExternes', tileset);
+    var mursBg_Layer = map.createLayer('MursBg', tileset);
+    var details_Layer = map.createLayer('Details', tileset);
+    var degrades_Layer = map.createLayer('Degrades', tileset);
+    var pics_Layer = map.createLayer('Pics', tileset);
+    var picsDegrades_Layer = map.createLayer('PicsDegrades', tileset);
+    var platforms_Layer = map.createLayer('Platforms', tileset);
+    var mursExternes_Layer = map.createLayer('MursExternes', tileset);
+
+    platforms_Layer.setCollisionByExclusion(-1,true);
+
+    this.physics.add.collider(maya, platforms_Layer);
+    /*this.physics.world.addCollider(player, enemies, hitplayer, null, this);
+    this.physics.add.collider(enemies, wallsLayer);
+    this.physics.add.overlap(enemies, shoots,hitenemies, null, this);
+    this.physics.add.collider(shoots, wallsLayer,hitwalls, null, this);
+    this.physics.add.collider(lazers, wallsLayer,hitwalls, null, this);
+    this.physics.add.overlap(player,lazers, deathplayer, null, this);
+    this.physics.add.overlap(player, bullet1,addmun, null, this);
+    this.physics.add.overlap(player, bullet2,addmun, null, this);
+    this.physics.add.overlap(player, bullet3,addmun, null, this);
+    this.physics.add.overlap(player, Moon,EndGame, null, this);*/
 
 
 
     // Maya
 
-    maya = this.physics.add.sprite(4096, 3328-128, 'maya').setDepth(1)
-    maya.body.collideWorldBounds = false
-    maya.body.setAllowGravity(false);
-    mayaCanon = this.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaCanon').setDepth(0.9)
+    maya = this.physics.add.sprite(4096, 3328-128, 'maya').setDepth(1);
+    maya.body.collideWorldBounds = false;
+    mayaCanon = this.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaCanon').setDepth(0.9);
     mayaCanon.body.setAllowGravity(false);
 
     this.anims.create({
@@ -187,7 +200,7 @@ function create(){
         frames : this.anims.generateFrameNumbers('maya', {start :0, end: 5}),
         frameRate : 5,
         repeat : -1
-    })
+    });
 
     // Maya Bullet
 
@@ -200,41 +213,41 @@ function create(){
         frames : this.anims.generateFrameNumbers('mayaBullet', {start :0, end: 2}),
         frameRate : 7,
         repeat : -1
-    })
+    });
     this.anims.create({
         key :'mayaBulletShot2',
         frames : this.anims.generateFrameNumbers('mayaBullet', {start :3, end: 5}),
         frameRate : 7,
         repeat : -1
-    })
+    });
     this.anims.create({
         key :'mayaBulletShot3',
         frames : this.anims.generateFrameNumbers('mayaBullet', {start :6, end: 8}),
         frameRate : 7,
         repeat : -1
-    })
+    });
     this.anims.create({
         key :'mayaBulletShot4',
         frames : this.anims.generateFrameNumbers('mayaBullet', {start :9, end: 11}),
         frameRate : 7,
         repeat : -1
-    })
+    });
     this.anims.create({
         key :'mayaBulletShot5',
         frames : this.anims.generateFrameNumbers('mayaBullet', {start :12, end: 14}),
         frameRate : 7,
         repeat : -1
-    })
+    });
     this.anims.create({
         key :'mayaBulletShot6',
         frames : this.anims.generateFrameNumbers('mayaBullet', {start :15, end: 17}),
         frameRate : 7,
         repeat : -1
-    })
+    });
 
     //Platforms
 
-    platforms = this.physics.add.staticGroup()
+    platforms = this.physics.add.staticGroup();
     this.physics.add.collider(maya, platforms);
 
 
@@ -263,7 +276,7 @@ function create(){
         frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
         frameRate : heartbeatRate,
         repeat : -1
-    })
+    });
 
 
     // Intro
@@ -305,21 +318,21 @@ function update(){
 
         // Backgrounds
 
-        bgSun.rotation += .0005
+        bgSun.rotation += .0005;
 
         // Maya
 
-        maya.setVelocityX(0)
+        maya.setVelocityX(0);
 
         if (!mayaWeightlessness){
             if (maya.body.touching.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
                 if (!maya.anims.isPlaying) {
-                    maya.play('maya_Idle1')                 // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
+                    maya.play('maya_Idle1');               // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
                 }else if(heartbeat.anims.CurrentKey != 'maya_Idle1'){
-                    maya.play('maya_Idle1')
+                    maya.play('maya_Idle1');
                 }
             }                                           // qu'après avoir sauté une première fois
-            mayaPlatformerControl(this)
+            mayaPlatformerControl(this);
         }
 
         // Curseur et tir
@@ -355,8 +368,8 @@ function update(){
 
 
 function cursorPosition(){
-    mouseCursor.x = game.input.mousePointer.x + maya.x - (screenWidth/2)
-    mouseCursor.y = game.input.mousePointer.y + maya.y - (screenHeight/2)
+    mouseCursor.x = game.input.mousePointer.x + maya.x - (screenWidth/2);
+    mouseCursor.y = game.input.mousePointer.y + maya.y - (screenHeight/2);
 
     //mouseCursorTrueXY.x = game.input.mousePointer.x
     //mouseCursorTrueXY.y = game.input.mousePointer.y
@@ -411,50 +424,50 @@ function mayaPlatformerControl(context){
 
     // Jump
     if (maya.body.touching.down && !mayaHasJumped && !cursors.down.isDown){                     // Si maya touche le sol et n'a pas sauté
-        mayaCanJump = true                                              // Maya peut sauter                                            // Maya peut sauter 
+        mayaCanJump = true;                                           // Maya peut sauter                                            // Maya peut sauter 
     }else{
         mayaCanJump = false;                           // Maya ne peut pas sauter
     }
 
     if(cursors.up.isDown && mayaCanJump){                                  
-        maya.setVelocityY(-1500)
-        mayaHasJumped = true
+        maya.setVelocityY(-1500);
+        mayaHasJumped = true;
     }
 
 
     if(!cursors.up.isDown && maya.body.touching.down){                                             // Si on appuie pas sur Haut
-        mayaHasJumped = false                                       // Maya n'a pas sauté
+        mayaHasJumped = false;                                       // Maya n'a pas sauté
     }
 
 
     // Left and Right
     if(cursors.left.isDown){
-        maya.setVelocityX(-450)
+        maya.setVelocityX(-450);
         if (mayaOrientation == 1)
             mayaOrientation = -1;
             maya.flipX = true;
     }
 
     if(cursors.right.isDown){
-        maya.setVelocityX(450)
+        maya.setVelocityX(450);
         if (mayaOrientation == -1)
-            mayaOrientation = 1
+            mayaOrientation = 1;
             maya.flipX = false;
     }
 
     // Stomp
     if(cursors.down.isDown && !maya.body.touching.down && !mayaStomping){  // Si Bas est appuyé, si Maya ne touche pas le sol et qu'elle n'esrt pas déjà en train de stomper
-        mayaStomping = true                                             // Maya est en train de stomper (ça veut pas dire grand-chose mais tant pis, je trouve pas la traduction FR, mais bon, d'un autre côté, tout le monde comprend, enfin je crois, sinon, bah tant pis)
-        mayaCanJump = false                                             // Maya ne peut pas sauter
+        mayaStomping = true;                                             // Maya est en train de stomper (ça veut pas dire grand-chose mais tant pis, je trouve pas la traduction FR, mais bon, d'un autre côté, tout le monde comprend, enfin je crois, sinon, bah tant pis)
+        mayaCanJump = false;                                             // Maya ne peut pas sauter
     }
     
     if (mayaStomping){                                                  // Si Maya est en train de stomper                                             
-        maya.setVelocity(0, 3000)                                       // Maya charge le sol en annulant les autres directions
+        maya.setVelocity(0, 3000);                                       // Maya charge le sol en annulant les autres directions
         if (maya.body.touching.down){                                   // Si Maya entre en contact avec le sol                              
-            mayaStomping = false
+            mayaStomping = false;
         }
     } else {
-        mayaHasStomped = false
+        mayaHasStomped = false;
     }
 
 }
@@ -469,20 +482,21 @@ function intro(){
 
 function uiAnims(context){
     if (!heartbeat.anims.isPlaying) {
-        heartbeat.play('heartbeatAnim')
+        heartbeat.play('heartbeatAnim');
     }
 
-    if (mayaHp >= 200)  heartbeatRate = 4
-    else if (mayaHp >= 150)  heartbeatRate = 6
-    else if (mayaHp >= 100)  heartbeatRate = 8
-    else if (mayaHp >= 50)  heartbeatRate = 10
-    else if (mayaHp >= 1)  heartbeatRate = 16
-    else if (mayaHp == 1)  heartbeatRate = 0
+    if (mayaHp >= 200)  heartbeatRate = 4;
+    else if (mayaHp >= 150)  heartbeatRate = 6;
+    else if (mayaHp >= 100)  heartbeatRate = 8;
+    else if (mayaHp >= 50)  heartbeatRate = 10;
+    else if (mayaHp >= 1)  heartbeatRate = 16;
+    else if (mayaHp == 1)  heartbeatRate = 0;
 
     lifeGaugeText = context.add.text(100, 75, mayaHp, {
         padding: { x: 10, y: 5 },
         fill: '#ffffff'
-    })
+    });
+
     lifeGaugeText.setScrollFactor(0)
     .setOrigin(0, 0)
     .setDepth(1);
