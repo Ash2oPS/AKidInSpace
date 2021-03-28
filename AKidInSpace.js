@@ -11,7 +11,7 @@ const config = {
         default: 'arcade',
         arcade:{
             gravity: {y: 4000},
-            debug: true
+            debug: false
         }
     },
     scene:{
@@ -56,8 +56,7 @@ var mouseCursorTrueXY
 var cursors
 var click
 var mayaBullet
-//var mayaBulletGroup = this.add.group();
-//mayaBulletGroup.add(mayaBulletGroup);
+var mayaBulletGroup
 var mayaShootTypeUnlocked = true;
 var mayaShootType = 0;
 var mayaShootRate = 40;
@@ -65,11 +64,23 @@ var mayaShootRateCount = 0;
 var mayaShootSpeed = 2000;
 var mayaCanShoot = true;
 
+//UI
+
+var lifeGauge;
+var lifeGaugeText;
+var heartbeat;
+var heartbeatRate = 4;
+
 
 
 ////////// PRELOAD //////////
 
 function preload(){
+
+    // TILED
+
+    this.load.image('tiles', 'assets/Tiled/TILED1.png');
+    this.load.tilemapTiledJSON('map', 'assets/Tiled/map.json');
 
     // Backgrounds
 
@@ -90,11 +101,17 @@ function preload(){
 
     // Divers
 
-    this.load.image('mouseCursor', 'assets/spr_Cursor.png')
+    this.load.image('mouseCursor', 'assets/spr_Cursor.png');
+
+    // UI
+
+    this.load.image('lifeGauge', 'assets/UI/spr_LifeGauge.png');
+    this.load.spritesheet('heartbeat', 'assets/UI/sprsht_Heartbeat.png', {frameWidth : 84, frameHeight : 84});
 
     // Intro
 
     this.load.image('intro', 'assets/introScreen.png');
+    
 
 }
 
@@ -141,12 +158,27 @@ function create(){
     .setScrollFactor(0.07)
     .setOrigin(0,0);
 
+    // TILED
+
+    const map = this.make.tilemap({key: 'map'});
+    const tileset = map.addTilesetImage('TILED1', 'tiles');
+
+    var spaceBG0_Layer = map.createLayer('SpaceBG0', tileset);
+    var mursBg_Layer =map.createLayer('MursBg', tileset);
+    var details_Layer =map.createLayer('Details', tileset);
+    var degrades_Layer =map.createLayer('Degrades', tileset);
+    var pics_Layer =map.createLayer('Pics', tileset);
+    var picsDegrades_Layer =map.createLayer('PicsDegrades', tileset);
+    var platforms_Layer =map.createLayer('Platforms', tileset);
+    var mursExternes_Layer =map.createLayer('MursExternes', tileset);
+
 
 
     // Maya
 
-    maya = this.physics.add.sprite(1200, 400, 'maya').setDepth(1)
-    maya.body.collideWorldBounds = false;
+    maya = this.physics.add.sprite(4096, 3328-128, 'maya').setDepth(1)
+    maya.body.collideWorldBounds = false
+    maya.body.setAllowGravity(false);
     mayaCanon = this.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaCanon').setDepth(0.9)
     mayaCanon.body.setAllowGravity(false);
 
@@ -157,7 +189,11 @@ function create(){
         repeat : -1
     })
 
-    // Maya Bullets
+    // Maya Bullet
+
+    mayaBulletGroup = this.physics.add.group({
+        allowGravity: false
+    }); 
 
     this.anims.create({
         key :'mayaBulletShot1',
@@ -199,7 +235,6 @@ function create(){
     //Platforms
 
     platforms = this.physics.add.staticGroup()
-    platforms.create(400, 1100, 'ground').setScale(100, 1).refreshBody()
     this.physics.add.collider(maya, platforms);
 
 
@@ -211,12 +246,32 @@ function create(){
     //mouseCursorTrueXY = this.add.image(game.input.mousePointer.x, game.input.mousePointer.y, 'mouseCursor')
     //.alpha = 0;
 
+    //UI
+
+    lifeGauge = this.add.image(64, 64, 'lifeGauge')
+    .setScrollFactor(0)
+    .setDepth(1)
+    .setOrigin(0, 0);
+
+    heartbeat = this.add.sprite(144, 42, 'heartbeat')
+    .setScrollFactor(0)
+    .setDepth(1)
+    .setOrigin(0,0);
+
+    this.anims.create({
+        key :'heartbeatAnim',
+        frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
+        frameRate : heartbeatRate,
+        repeat : -1
+    })
+
+
     // Intro
 
     introScreen = this.add.image(0, 0, 'intro')
     .setScrollFactor(0)
     .setOrigin(0, 0)
-    .setDepth(1);
+    .setDepth(1.5);
 
     // Camera
 
@@ -228,7 +283,6 @@ function create(){
 ////////// UPDATE //////////
 
 function update(){
-
 
     // DEBUG TEXT
     if (config.physics.arcade.debug){
@@ -244,6 +298,8 @@ function update(){
         intro();
     else{
 
+        uiAnims(this);  
+
         if (introScreenCount >= 240 && introScreenCount < 340)
             introScreen.alpha -= 0.01;
 
@@ -256,8 +312,12 @@ function update(){
         maya.setVelocityX(0)
 
         if (!mayaWeightlessness){
-            if (!maya.body.touching.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
-                maya.play('maya_Idle1')                 // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
+            if (maya.body.touching.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
+                if (!maya.anims.isPlaying) {
+                    maya.play('maya_Idle1')                 // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
+                }else if(heartbeat.anims.CurrentKey != 'maya_Idle1'){
+                    maya.play('maya_Idle1')
+                }
             }                                           // qu'après avoir sauté une première fois
             mayaPlatformerControl(this)
         }
@@ -310,6 +370,8 @@ function mayaFire(context){
             mayaShootType = 0;    
         }
 
+
+        
 
         mayaBullet = context.physics.add.sprite(maya.x - 20 * mayaOrientation, maya.y - 51, 'mayaBullet');
         mayaBullet.rotation = Phaser.Math.Angle.BetweenPoints(mayaBullet, mouseCursor);
@@ -404,6 +466,28 @@ function intro(){
         introScreenCount ++;
     }
 }
+
+function uiAnims(context){
+    if (!heartbeat.anims.isPlaying) {
+        heartbeat.play('heartbeatAnim')
+    }
+
+    if (mayaHp >= 200)  heartbeatRate = 4
+    else if (mayaHp >= 150)  heartbeatRate = 6
+    else if (mayaHp >= 100)  heartbeatRate = 8
+    else if (mayaHp >= 50)  heartbeatRate = 10
+    else if (mayaHp >= 1)  heartbeatRate = 16
+    else if (mayaHp == 1)  heartbeatRate = 0
+
+    lifeGaugeText = context.add.text(100, 75, mayaHp, {
+        padding: { x: 10, y: 5 },
+        fill: '#ffffff'
+    })
+    lifeGaugeText.setScrollFactor(0)
+    .setOrigin(0, 0)
+    .setDepth(1);
+}
+
 
 
 
