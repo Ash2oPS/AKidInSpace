@@ -10,15 +10,17 @@ const config = {
     physics:{
         default: 'arcade',
         arcade:{
-            gravity: {y: 4000},
-            debug: false
+            gravity: {y: 700},
+            debug: true
         }
     },
-    scene:{
+    input : {gamepad:true},
+    scene: {
         preload: preload,
         create: create,
-        update: update
-        //render: render
+        update: update},
+        scale: {
+        zoom:1,
     }
 }
 
@@ -122,7 +124,7 @@ function create(){
     // DEBUG TEXT
     if (config.physics.arcade.debug){
         debugText = this.add.text(100, 100,"debug", {
-            fontSize: '18px',
+            fontSize: '24px',
             padding: { x: 10, y: 5 },
             backgroundColor: '#000000',
             fill: '#ffffff'
@@ -164,33 +166,25 @@ function create(){
     const tileset = map.addTilesetImage('TILED1', 'tiles');
 
     var spaceBG0_Layer = map.createLayer('SpaceBG0', tileset);
+    var spaceBG1_Layer = map.createLayer('SpaceBG1', tileset);
+    var spaceBG2_Layer = map.createLayer('SpaceBG2', tileset);
     var mursBg_Layer = map.createLayer('MursBg', tileset);
     var details_Layer = map.createLayer('Details', tileset);
     var degrades_Layer = map.createLayer('Degrades', tileset);
     var pics_Layer = map.createLayer('Pics', tileset);
-    var picsDegrades_Layer = map.createLayer('PicsDegrades', tileset);
     var platforms_Layer = map.createLayer('Platforms', tileset);
+    var picsDegrades_Layer = map.createLayer('PicsDegrades', tileset);
     var mursExternes_Layer = map.createLayer('MursExternes', tileset);
 
     platforms_Layer.setCollisionByExclusion(-1,true);
-
-    this.physics.add.collider(maya, platforms_Layer);
-    /*this.physics.world.addCollider(player, enemies, hitplayer, null, this);
-    this.physics.add.collider(enemies, wallsLayer);
-    this.physics.add.overlap(enemies, shoots,hitenemies, null, this);
-    this.physics.add.collider(shoots, wallsLayer,hitwalls, null, this);
-    this.physics.add.collider(lazers, wallsLayer,hitwalls, null, this);
-    this.physics.add.overlap(player,lazers, deathplayer, null, this);
-    this.physics.add.overlap(player, bullet1,addmun, null, this);
-    this.physics.add.overlap(player, bullet2,addmun, null, this);
-    this.physics.add.overlap(player, bullet3,addmun, null, this);
-    this.physics.add.overlap(player, Moon,EndGame, null, this);*/
+    pics_Layer.setCollisionByExclusion(-1,true);
+    mursExternes_Layer.setCollisionByExclusion(-1, true);
 
 
 
     // Maya
 
-    maya = this.physics.add.sprite(4096, 3328-128, 'maya').setDepth(1);
+    maya = this.physics.add.sprite(4096, 3000, 'maya').setDepth(1);
     maya.body.collideWorldBounds = false;
     mayaCanon = this.physics.add.sprite(maya.x - 20, maya.y - 51, 'mayaCanon').setDepth(0.9);
     mayaCanon.body.setAllowGravity(false);
@@ -245,11 +239,22 @@ function create(){
         repeat : -1
     });
 
-    //Platforms
+    //COLLIDERS
 
-    platforms = this.physics.add.staticGroup();
-    this.physics.add.collider(maya, platforms);
+    this.physics.add.collider(maya, platforms_Layer);
+    this.physics.add.collider(maya, pics_Layer, mayaDeath(this));
+    this.physics.add.collider(maya, mursExternes_Layer);
 
+    /*this.physics.world.addCollider(player, enemies, hitplayer, null, this);
+    this.physics.add.collider(enemies, wallsLayer);
+    this.physics.add.overlap(enemies, shoots,hitenemies, null, this);
+    this.physics.add.collider(shoots, wallsLayer,hitwalls, null, this);
+    this.physics.add.collider(lazers, wallsLayer,hitwalls, null, this);
+    this.physics.add.overlap(player,lazers, deathplayer, null, this);
+    this.physics.add.overlap(player, bullet1,addmun, null, this);
+    this.physics.add.overlap(player, bullet2,addmun, null, this);
+    this.physics.add.overlap(player, bullet3,addmun, null, this);
+    this.physics.add.overlap(player, Moon,EndGame, null, this);*/
 
     // Divers
 
@@ -299,9 +304,10 @@ function update(){
 
     // DEBUG TEXT
     if (config.physics.arcade.debug){
-        debugText.setText('maya Touching Down : ' + maya.body.touching.down + '    maya weightlessness : ' + mayaWeightlessness + 
+        debugText.setText('maya blocked Down : ' + maya.body.blocked.down + '    maya weightlessness : ' + mayaWeightlessness + 
         '\nmaya can Jump : ' + mayaCanJump + '    maya has Jumped : ' + mayaHasJumped + 
-        '\nmaya Jump Timer : ' + mayaJumpTimer + '    maya Jump Timer Buffer : ' + mayaJumpTimerBuffer
+        '\nmaya Jump Timer : ' + mayaJumpTimer + '    maya Jump Timer Buffer : ' + mayaJumpTimerBuffer +
+        '\n rotation canon :' + Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor)
         );
     }
 
@@ -322,17 +328,22 @@ function update(){
 
         // Maya
 
-        maya.setVelocityX(0);
+
+        if (maya.x > 7800 && maya.x <13440){
+            mayaWeightlessness = true;
+        } else  mayaWeightlessness = false;
 
         if (!mayaWeightlessness){
-            if (maya.body.touching.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
+            if (maya.body.blocked.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
                 if (!maya.anims.isPlaying) {
                     maya.play('maya_Idle1');               // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
-                }else if(heartbeat.anims.CurrentKey != 'maya_Idle1'){
+                }else if(maya.anims.CurrentKey != 'maya_Idle1'){
                     maya.play('maya_Idle1');
                 }
             }                                           // qu'après avoir sauté une première fois
             mayaPlatformerControl(this);
+        } else{
+            mayaWeightlessnessControl(this)
         }
 
         // Curseur et tir
@@ -384,7 +395,26 @@ function mayaFire(context){
         }
 
 
-        
+        for (const mayaBullet of mayaBulletGroup.children.entries) {
+            if (enemie.body.blocked.right) {
+                enemie.direction = 'LEFT';
+            }
+    
+            if (enemie.body.blocked.left) {
+                enemie.direction = 'RIGHT';
+            }
+    
+            if (enemie.direction === 'RIGHT') {
+                enemie.setVelocityX(100);
+                enemie.setFlipX(false);
+                enemie.anims.play("enemierun", true);
+            } else {
+                enemie.setVelocityX(-100);
+                enemie.setFlipX(true);
+                enemie.anims.play("enemierun", true);
+            }
+           
+        }
 
         mayaBullet = context.physics.add.sprite(maya.x - 20 * mayaOrientation, maya.y - 51, 'mayaBullet');
         mayaBullet.rotation = Phaser.Math.Angle.BetweenPoints(mayaBullet, mouseCursor);
@@ -417,25 +447,33 @@ function mayaFire(context){
             mayaShootRate = 40;
         }
     }
+
+    maya.setVelocityX(500 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+    maya.setVelocityY(500 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
 }
 
 function mayaPlatformerControl(context){
 
+    maya.body.setAllowGravity(true);
+
+    if (maya.body.blocked.down && !cursors.right.isDown  && !cursors.left.isDown){
+        maya.setVelocityX(0)
+    }
 
     // Jump
-    if (maya.body.touching.down && !mayaHasJumped && !cursors.down.isDown){                     // Si maya touche le sol et n'a pas sauté
+    if (maya.body.blocked.down && !mayaHasJumped && !cursors.down.isDown){                     // Si maya touche le sol et n'a pas sauté
         mayaCanJump = true;                                           // Maya peut sauter                                            // Maya peut sauter 
     }else{
         mayaCanJump = false;                           // Maya ne peut pas sauter
     }
 
     if(cursors.up.isDown && mayaCanJump){                                  
-        maya.setVelocityY(-1500);
+        maya.setVelocityY(-700);
         mayaHasJumped = true;
     }
 
 
-    if(!cursors.up.isDown && maya.body.touching.down){                                             // Si on appuie pas sur Haut
+    if(!cursors.up.isDown && maya.body.blocked.down){                                             // Si on appuie pas sur Haut
         mayaHasJumped = false;                                       // Maya n'a pas sauté
     }
 
@@ -456,20 +494,20 @@ function mayaPlatformerControl(context){
     }
 
     // Stomp
-    if(cursors.down.isDown && !maya.body.touching.down && !mayaStomping){  // Si Bas est appuyé, si Maya ne touche pas le sol et qu'elle n'esrt pas déjà en train de stomper
+    /*
+    if(cursors.down.isDown && !maya.body.blocked.down && !mayaStomping){  // Si Bas est appuyé, si Maya ne touche pas le sol et qu'elle n'esrt pas déjà en train de stomper
         mayaStomping = true;                                             // Maya est en train de stomper (ça veut pas dire grand-chose mais tant pis, je trouve pas la traduction FR, mais bon, d'un autre côté, tout le monde comprend, enfin je crois, sinon, bah tant pis)
         mayaCanJump = false;                                             // Maya ne peut pas sauter
     }
     
     if (mayaStomping){                                                  // Si Maya est en train de stomper                                             
         maya.setVelocity(0, 3000);                                       // Maya charge le sol en annulant les autres directions
-        if (maya.body.touching.down){                                   // Si Maya entre en contact avec le sol                              
+        if (maya.body.blocked.down){                                   // Si Maya entre en contact avec le sol                              
             mayaStomping = false;
         }
     } else {
         mayaHasStomped = false;
-    }
-
+    }*/
 }
 
 function intro(){
@@ -502,9 +540,10 @@ function uiAnims(context){
     .setDepth(1);
 }
 
+function mayaWeightlessnessControl(context){
+    maya.body.setAllowGravity(false);
+}
 
-
-
-/*function render(){
-    
-}*/
+function mayaDeath(context){
+    context.scene.restart();
+}
