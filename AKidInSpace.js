@@ -833,7 +833,7 @@ function spaceBee1_behav(){
     spaceBee1.y = spaceBee1Y + Math.sin(spaceBee1timer*spaceBee1frequency)*spaceBee1amplitude;
     spaceBee1timer ++;
 
-    if(maya.x > spaceBee1.x + 600){
+    if(maya.x > spaceBee1.x - 600){
 
         if(spaceBee1Count >= spaceBee1Rate)
         spaceBee1.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee1, maya)));
@@ -887,7 +887,7 @@ function spaceBee2_behav(){
     spaceBee2.y = spaceBee2Y + Math.sin(spaceBee2timer*spaceBee2frequency)*spaceBee2amplitude;
     spaceBee2timer ++;
 
-    if(maya.x > spaceBee2.x + 600){
+    if(maya.x > spaceBee2.x - 600){
 
     
         if(spaceBee2Count >= spaceBee2Rate)
@@ -942,7 +942,7 @@ function spaceBee3_behav(){
     spaceBee3.y = spaceBee3Y + Math.sin(spaceBee3timer*spaceBee3frequency)*spaceBee3amplitude;
     spaceBee3timer ++;
 
-    if(maya.x > spaceBee1.x + 900){
+    if(maya.x > spaceBee1.x - 900){
 
     
         if(spaceBee3Count >= spaceBee3Rate)
