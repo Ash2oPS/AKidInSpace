@@ -11,7 +11,7 @@ const config = {
         default: 'arcade',
         arcade:{
             gravity: {y: 700},
-            debug: true
+            debug: false
         }
     },
     input : {gamepad:true},
@@ -27,6 +27,8 @@ const config = {
 ////////// VARIABLES //////////
 
 var game = new Phaser.Game(config);
+
+var textVictoire;
 
 var debugText;
 
@@ -68,6 +70,8 @@ var mayaShootRateCount
 var mayaShootSpeed
 var mayaCanShoot
 
+var powerUp;
+
 //UI
 
 var lifeGauge;
@@ -85,9 +89,37 @@ var spaceBee1Rate;
 var spaceBee1Count;
 var spaceBee1X;
 var spaceBee1Y;
-var frequency;
-var amplitude;
-var timer;
+var spaceBee1frequency;
+var spaceBee1amplitude;
+var spaceBee1timer;
+
+var spaceBee2;
+var spaceBee2Alive;
+var spaceBee2hp;
+var spaceBee2Power;
+var spaceBee2Rate;
+var spaceBee2Count;
+var spaceBee2X;
+var spaceBee2Y;
+var spaceBee2frequency;
+var spaceBee2amplitude;
+var spaceBee2timer;
+
+var spaceBee3;
+var spaceBee3Alive;
+var spaceBee3hp;
+var spaceBee3Power;
+var spaceBee3Rate;
+var spaceBee3Count;
+var spaceBee3X;
+var spaceBee3Y;
+var spaceBee3frequency;
+var spaceBee3amplitude;
+var spaceBee3timer;
+
+
+var spaceBeeInvincible;
+var spaceBeeframes;
 
 
 
@@ -113,6 +145,8 @@ function preload(){
     this.load.image('mayaCanon', 'assets/Maya/canon.png');
     this.load.spritesheet('mayaBullet', 'assets/Maya/spr_MayaBullet.png', {frameWidth : 44, frameHeight : 44});
 
+    this.load.spritesheet('powerUp', 'assets/Maya/sprsht_powerup1.png', {frameWidth : 340, frameHeight : 256});
+
     //Platforms 
 
     this.load.image('ground', 'assets/spr_Platform1.png');
@@ -133,6 +167,8 @@ function preload(){
     //Ennemis
 
     this.load.spritesheet('spaceBee', 'assets/Ennemy/sprsht_Ennemy.png', { frameWidth : 256, frameHeight : 256});
+    this.load.spritesheet('spaceBee2', 'assets/Ennemy/sprsht_Ennemy2.png', { frameWidth : 256, frameHeight : 256});
+    this.load.spritesheet('spaceBee3', 'assets/Ennemy/sprsht_Ennemy3.png', { frameWidth : 512, frameHeight : 512});
     
 
 }
@@ -142,7 +178,7 @@ function preload(){
 function create(){
 
     introScreenCount = 0;
-    beginPlay = true;
+    beginPlay = false;
 
     mayaWeightlessness = false;
 
@@ -248,9 +284,6 @@ function create(){
 
     // Maya Bullet
 
-    mayaBulletGroup = this.physics.add.group({
-        allowGravity: false
-    }); 
 
     this.anims.create({
         key :'mayaBulletShot1',
@@ -289,6 +322,18 @@ function create(){
         repeat : -1
     });
 
+    powerUp = this.physics.add.sprite(15744, 4484, 'powerUp');
+    powerUp.body.setAllowGravity(false);
+
+    this.anims.create({
+        key :'powerUpAnim',
+        frames : this.anims.generateFrameNumbers('powerUp', {start :0, end: 5}),
+        frameRate : 7,
+        repeat : -1
+    });
+
+    powerUp.play('powerUpAnim');
+
 
     // Divers
 
@@ -311,7 +356,7 @@ function create(){
     .setOrigin(0,0);
 
     this.anims.create({
-        key :'heartbeatAnim1',
+        key :'heartbeatAnim',
         frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
         frameRate : heartbeatRate,
         repeat : -1
@@ -343,7 +388,7 @@ function create(){
 
     lifeGaugeText = this.add.text(100, 75, mayaHp, {
         padding: { x: 10, y: 5 },
-        fill: '#ffffff'
+        fill: '#000000'
     });
 
     lifeGaugeText.setScrollFactor(0)
@@ -377,13 +422,59 @@ function create(){
     spaceBee1frequency = 0.1;
     spaceBee1amplitude = 120;
     spaceBee1timer = 0;
+
+    spaceBee2Alive = true;
+    spaceBee2hp = 800;
+    spaceBee2Power = 50;
+    spaceBee2Rate = 100;
+    spaceBee2Count = 0;
+    spaceBee2X = 18816;
+    spaceBee2Y = 4088;
+    spaceBee2frequency = 0.1;
+    spaceBee2amplitude = 120;
+    spaceBee2timer = 0;
+
+    spaceBee3Alive = true;
+    spaceBee3hp = 4000;
+    spaceBee3Power = 70;
+    spaceBee3Rate = 400;
+    spaceBee3Count = 0;
+    spaceBee3X = 30984;
+    spaceBee3Y = 4864;
+    spaceBee3frequency = 0.02;
+    spaceBee3amplitude = 200;
+    spaceBee3timer = 0;
+
+    spaceBeeframes = 0;
+    spaceBeeInvincible = false;
+    
     spaceBee1 = this.physics.add.sprite(spaceBee1X, spaceBee1Y, 'spaceBee');
     spaceBee1.body.setAllowGravity(false);
+
+    spaceBee2 = this.physics.add.sprite(spaceBee2X, spaceBee2Y, 'spaceBee2');
+    spaceBee2.body.setAllowGravity(false);
+
+    spaceBee3 = this.physics.add.sprite(spaceBee3X, spaceBee3Y, 'spaceBee3');
+    spaceBee3.body.setAllowGravity(false);
 
     this.anims.create({
         key :'spaceBeeAnim',
         frames : this.anims.generateFrameNumbers('spaceBee', {start :0, end: 3}),
         frameRate : 12,
+        repeat : -1
+    });
+
+    this.anims.create({
+        key :'spaceBeeAnim2',
+        frames : this.anims.generateFrameNumbers('spaceBee2', {start :0, end: 3}),
+        frameRate : 12,
+        repeat : -1
+    });
+
+    this.anims.create({
+        key :'spaceBeeAnim3',
+        frames : this.anims.generateFrameNumbers('spaceBee3', {start :0, end: 3}),
+        frameRate : 10,
         repeat : -1
     });
 
@@ -393,9 +484,17 @@ function create(){
     this.physics.add.collider(maya, pics_Layer, function(){mayaHp = 0});
     this.physics.add.collider(maya, mursExternes_Layer);
 
-    this.physics.add.collider(maya, spaceBee1, mayaHurtSB1)
-    this.physics.add.collider(spaceBee1, maya, mayaHurtSB1)
-    this.physics.add.collider(spaceBee1, platforms_Layer)
+    this.physics.add.collider(maya, spaceBee1, mayaHurtSB1);
+    this.physics.add.collider(spaceBee1, maya, mayaHurtSB1);
+
+    this.physics.add.collider(maya, spaceBee2, mayaHurtSB2);
+    this.physics.add.collider(spaceBee2, maya, mayaHurtSB2);
+
+    this.physics.add.collider(maya, spaceBee3, mayaHurtSB3);
+    this.physics.add.collider(spaceBee3, maya, mayaHurtSB3);
+    //this.physics.add.collider(spaceBee1, mayaBullet,function(){console.log('aie')} /*spaceBee1CaFaitMal*/);
+    
+    this.physics.add.collider(maya, powerUp, powerUpDest);
 
     /*this.physics.world.addCollider(player, enemies, hitplayer, null, this);
     this.physics.add.collider(enemies, wallsLayer);
@@ -420,75 +519,105 @@ function update(){
         debugText.setText('maya blocked Down : ' + maya.body.blocked.down + '    maya weightlessness : ' + mayaWeightlessness + 
         '\nmaya can Jump : ' + mayaCanJump + '    maya has Jumped : ' + mayaHasJumped + 
         '\nmaya Jump Timer : ' + mayaJumpTimer + '    maya Jump Timer Buffer : ' + mayaJumpTimerBuffer +
-        '\n spacebee1.y :' + spaceBee1.x
+        '\n spacebee2 hp:' + spaceBee2hp + 'spacebee3 hp' + spaceBee3hp
         );
     }
 
     //
 
-    if(!beginPlay)
-        intro();
-    else{
+    if(spaceBee3Alive){
 
-        if (mayaHp <= 0)  mayaDeath(this)
+        if(!beginPlay)
+            intro();
+        else{
 
-        mayaInviManagement();
-
-        spaceBee1_behav();
-
-        uiAnims(this);  
-
-        if (introScreenCount >= 240 && introScreenCount < 340)
-            introScreen.alpha -= 0.01;
-
-        // Backgrounds
-
-        bgSun.rotation += .0005;
-
-        // Maya
-
-
-        if (maya.x > 7800 && maya.x <13440){
-            mayaWeightlessness = true;
-        } else  mayaWeightlessness = false;
-
-        if (!mayaWeightlessness){
-            if (maya.body.blocked.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
-                if (!maya.anims.isPlaying) {
-                    maya.play('maya_Idle1');               // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
-                }else if(maya.anims.CurrentKey != 'maya_Idle1'){
-                    maya.play('maya_Idle1');
+            if (spaceBeeInvincible){
+                spaceBeeframes ++;
+                if (spaceBeeframes >= 6){
+                    spaceBeeframes = 0
+                    spaceBeeInvincible = false;
+                    spaceBee1.setTint(0xffffff);
+                    spaceBee2.setTint(0xffffff);
+                    spaceBee3.setTint(0xffffff);
                 }
-            }                                           // qu'après avoir sauté une première fois
-            mayaPlatformerControl(this);
-        } else{
-            mayaWeightlessnessControl(this)
-        }
-
-        // Curseur et tir
-
-        cursorPosition()
-
-        if (this.input.activePointer.isDown)
-        {
-            mayaFire(this);
-            
-        }
-
-        if (!mayaCanShoot){
-            if (mayaShootRateCount < mayaShootRate){
-                mayaShootRateCount ++;
-            } else {
-                mayaCanShoot = true;
-                mayaShootRateCount = 0;
+                
             }
+
+            if (mayaHp <= 0)  mayaDeath(this)
+
+            mayaInviManagement();
+
+            spaceBee1_behav();
+            spaceBee2_behav();
+            spaceBee3_behav();
+
+            uiAnims(this);  
+
+            if (introScreenCount >= 240 && introScreenCount < 340)
+                introScreen.alpha -= 0.01;
+
+            // Backgrounds
+
+            bgSun.rotation += .0005;
+
+            // Maya
+
+
+            if ((maya.x > 7800 && maya.x <13440) || maya.x > 21640){
+                mayaWeightlessness = true;
+            } else  mayaWeightlessness = false;
+
+            if (!mayaWeightlessness){
+                if (maya.body.blocked.down){              // L'animation a un soucis. Je dois inverser la condition de touching down
+                    if (!maya.anims.isPlaying) {
+                        maya.play('maya_Idle1');               // sinon elle se joue dans les airs. De plsu, elle ne fonctionne
+                    }else if(maya.anims.CurrentKey != 'maya_Idle1'){
+                        maya.play('maya_Idle1');
+                    }
+                }                                           // qu'après avoir sauté une première fois
+                mayaPlatformerControl(this);
+            } else{
+                mayaWeightlessnessControl(this)
+            }
+
+            // Curseur et tir
+
+            cursorPosition()
+
+            if (this.input.activePointer.isDown)
+            {
+                mayaFire(this);
+                
+            }
+
+            if (!mayaCanShoot){
+                if (mayaShootRateCount < mayaShootRate){
+                    mayaShootRateCount ++;
+                } else {
+                    mayaCanShoot = true;
+                    mayaShootRateCount = 0;
+                }
+            }
+
+            mayaCanon.x = maya.x - 20 * mayaOrientation;    // le canon suit Maya avec une frame de retard 
+            mayaCanon.y = maya.y - 51;                      // Dans l'idéal, il faudrait dire que Canon est enfant de Maya ?
+            mayaCanon.rotation = Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor);
+
+
         }
 
-        mayaCanon.x = maya.x - 20 * mayaOrientation;    // le canon suit Maya avec une frame de retard 
-        mayaCanon.y = maya.y - 51;                      // Dans l'idéal, il faudrait dire que Canon est enfant de Maya ?
-        mayaCanon.rotation = Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor);
+    }else {
+        textVictoire = this.add.text(200, 200,"Vous avez gagné ! Appuyez sur Espace pour recommencer !", {
+            fontSize: '32px',
+            padding: { x: 10, y: 5 },
+            backgroundColor: '#000000',
+            fill: '#ffffff'
+        });
+        textVictoire.setScrollFactor(0);
 
-
+        if (cursors.up.isDown){
+            this.scene.restart();
+        }
     }
 
 }
@@ -508,11 +637,11 @@ function cursorPosition(){
 function mayaFire(context){
     if (mayaCanShoot){
         if (!mayaShootTypeUnlocked){
-            maya.setVelocityX(200 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
-            maya.setVelocityY(200 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+            maya.setVelocityX(350 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+            maya.setVelocityY(350 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
         }else{
-            maya.setVelocityX(600 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
-            maya.setVelocityY(600 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+            maya.setVelocityX(650 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+            maya.setVelocityY(650 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
         }
         mayaCanShoot = false;
 
@@ -546,6 +675,9 @@ function mayaFire(context){
         mayaBullet.rotation = Phaser.Math.Angle.BetweenPoints(mayaBullet, mouseCursor);
         mayaBullet.body.setAllowGravity(false);
         mayaBullet.checkWorldBounds = true;
+        context.physics.add.overlap(spaceBee1, mayaBullet, spaceBee1CaFaitMal);
+        context.physics.add.overlap(spaceBee2, mayaBullet, spaceBee2CaFaitMal);
+        context.physics.add.overlap(spaceBee3, mayaBullet, spaceBee3CaFaitMal);
         context.physics.angleTo;
         context.physics.moveTo(mayaBullet, mouseCursor.x, mouseCursor.y, mayaShootSpeed);
 
@@ -685,7 +817,11 @@ function mayaInviManagement(){
         mayaInvincibleTimer ++;
     }
 
+}
 
+function powerUpDest(){
+    mayaShootTypeUnlocked = true;
+    powerUp.destroy(); 
 }
 
 function spaceBee1_behav(){
@@ -697,9 +833,8 @@ function spaceBee1_behav(){
     spaceBee1.y = spaceBee1Y + Math.sin(spaceBee1timer*spaceBee1frequency)*spaceBee1amplitude;
     spaceBee1timer ++;
 
-    if(maya.x > 5500 && maya.x < 6400){
+    if(maya.x > 6000){
 
-    }
         if(spaceBee1Count >= spaceBee1Rate)
         spaceBee1.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee1, maya)));
         spaceBee1.setVelocityY(400 * Math.sin(Phaser.Math.Angle.BetweenPoints(spaceBee1, maya)));
@@ -710,12 +845,141 @@ function spaceBee1_behav(){
 
         spaceBee1Count++;
     }
+}
 
+}
+
+function spaceBee1CaFaitMal(){
+
+    if (!spaceBeeInvincible){
+        spaceBee1hp -=20;
+
+        if (spaceBee1hp <=0){
+            spaceBee1.destroy(); 
+            spaceBee1Alive = false;
+        }
+
+
+        spaceBeeInvincible = true;
+
+        spaceBee1.setTint(0xff0000);
+    }
+
+    
 }
 
 function mayaHurtSB1(){
     if(!mayaInvincible){
     mayaInvincible = true;
     mayaHp -= spaceBee1Power;
+    }
+}
+
+//-----------------------------------------------
+
+function spaceBee2_behav(){
+
+    if(spaceBee2Alive){
+    if(!spaceBee2.anims.isPlaying)
+        spaceBee2.play('spaceBeeAnim2')
+        
+    spaceBee2.y = spaceBee2Y + Math.sin(spaceBee2timer*spaceBee2frequency)*spaceBee2amplitude;
+    spaceBee2timer ++;
+
+    if(maya.x > 17000){
+
+    
+        if(spaceBee2Count >= spaceBee2Rate)
+        spaceBee2.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee2, maya)));
+        spaceBee2.setVelocityY(400 * Math.sin(Phaser.Math.Angle.BetweenPoints(spaceBee2, maya)));
+        if((spaceBee2Count >= spaceBee2Rate + 150)){
+            spaceBee2Count = 0
+            spaceBee2.setVelocity(0, 0);
+        }
+
+            spaceBee2Count++;
+        }
+    }
+
+}
+
+function spaceBee2CaFaitMal(){
+
+    if (!spaceBeeInvincible){
+        spaceBee2hp -=20;
+
+        if (spaceBee2hp <=0){
+            spaceBee2.destroy(); 
+            spaceBee2Alive = false;
+        }
+
+
+        spaceBeeInvincible = true;
+
+        spaceBee2.setTint(0xff0000);
+    }
+
+    
+}
+
+function mayaHurtSB2(){
+    if(!mayaInvincible){
+    mayaInvincible = true;
+    mayaHp -= spaceBee2Power;
+    }
+}
+
+//-----------------------------------------------
+
+function spaceBee3_behav(){
+
+    if(spaceBee3Alive){
+    if(!spaceBee3.anims.isPlaying)
+        spaceBee3.play('spaceBeeAnim3')
+        
+    spaceBee3.y = spaceBee3Y + Math.sin(spaceBee3timer*spaceBee3frequency)*spaceBee3amplitude;
+    spaceBee3timer ++;
+
+    if(maya.x > 26650){
+
+    
+        if(spaceBee3Count >= spaceBee3Rate)
+        spaceBee3.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee3, maya)));
+        spaceBee3.setVelocityY(400 * Math.sin(Phaser.Math.Angle.BetweenPoints(spaceBee3, maya)));
+        if((spaceBee3Count >= spaceBee3Rate + 150)){
+            spaceBee3Count = 0
+            spaceBee3.setVelocity(0, 0);
+        }
+
+        spaceBee3Count++;
+    }
+
+}
+
+}
+
+function spaceBee3CaFaitMal(){
+
+    if (!spaceBeeInvincible){
+        spaceBee3hp -=20;
+
+        if (spaceBee3hp <=0){
+            spaceBee3.destroy(); 
+            spaceBee3Alive = false;
+        }
+
+
+        spaceBeeInvincible = true;
+
+        spaceBee3.setTint(0xff0000);
+    }
+
+    
+}
+
+function mayaHurtSB3(){
+    if(!mayaInvincible){
+    mayaInvincible = true;
+    mayaHp -= spaceBee3Power;
     }
 }
