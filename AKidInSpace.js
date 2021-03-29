@@ -162,7 +162,7 @@ function preload(){
 
     // Intro.
 
-    this.load.image('intro', 'assets/IntroScreen.png');
+    this.load.image('intro', 'assets/introScreen.png');
 
     //Ennemis
 
