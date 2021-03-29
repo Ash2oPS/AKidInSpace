@@ -160,7 +160,7 @@ function preload(){
     this.load.image('lifeGauge', 'assets/UI/spr_LifeGauge.png');
     this.load.spritesheet('heartbeat', 'assets/UI/sprsht_Heartbeat.png', {frameWidth : 84, frameHeight : 84});
 
-    // Intro
+    // Intro.
 
     this.load.image('intro', 'assets/IntroScreen.png');
 
