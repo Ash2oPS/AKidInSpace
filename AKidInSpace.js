@@ -31,27 +31,29 @@ var game = new Phaser.Game(config);
 var debugText;
 
 var introScreen;
-var introScreenCount = 0;
-var beginPlay = false;
+var introScreenCount
+var beginPlay
 
 var background;
 var bgSun;
 var bgStars1;
 var bgStars2;
 var maya;
+var mayaInvincible;
+var mayaInvincibleTimer;
 var mayaCanon;
-var mayaWeightlessness = false;
+var mayaWeightlessness
 
-var mayaJumpTimer = 0;
-var mayaJumpTimerBuffer = -1;
-var mayaJumpVector = 0;
-var mayaOrientation = 1;
-var mayaHp = 255;
-var mayaMaxHp = 255;
-var mayaCanJump = false;
-var mayaHasJumped = false;
-var mayaStomping = false;
-var mayaHasStomped = false;
+var mayaJumpTimer
+var mayaJumpTimerBuffer
+var mayaJumpVector
+var mayaOrientation
+var mayaHp
+var mayaMaxHp
+var mayaCanJump
+var mayaHasJumped
+var mayaStomping 
+var mayaHasStomped
 
 var mouseCursor;
 var mouseCursorTrueXY;
@@ -59,19 +61,33 @@ var cursors;
 var click;
 var mayaBullet;
 var mayaBulletGroup;
-var mayaShootTypeUnlocked = true;
-var mayaShootType = 0;
-var mayaShootRate = 40;
-var mayaShootRateCount = 0;
-var mayaShootSpeed = 2000;
-var mayaCanShoot = true;
+var mayaShootTypeUnlocked
+var mayaShootType
+var mayaShootRate
+var mayaShootRateCount
+var mayaShootSpeed
+var mayaCanShoot
 
 //UI
 
 var lifeGauge;
 var lifeGaugeText;
 var heartbeat;
-var heartbeatRate = 4;
+var heartbeatRate
+
+//ENNEMIS
+
+var spaceBee1;
+var spaceBee1Alive;
+var spaceBee1hp;
+var spaceBee1Power;
+var spaceBee1Rate;
+var spaceBee1Count;
+var spaceBee1X;
+var spaceBee1Y;
+var frequency;
+var amplitude;
+var timer;
 
 
 
@@ -113,6 +129,10 @@ function preload(){
     // Intro
 
     this.load.image('intro', 'assets/introScreen.png');
+
+    //Ennemis
+
+    this.load.spritesheet('spaceBee', 'assets/Ennemy/sprsht_Ennemy.png', { frameWidth : 256, frameHeight : 256});
     
 
 }
@@ -120,6 +140,33 @@ function preload(){
 ////////// CREATE //////////
 
 function create(){
+
+    introScreenCount = 0;
+    beginPlay = true;
+
+    mayaWeightlessness = false;
+
+    mayaJumpTimer = 0;
+    mayaJumpTimerBuffer = -1;
+    mayaJumpVector = 0;
+    mayaOrientation = 1;
+    mayaInvincible = false;
+    mayaInvincibleTimer = 0;
+    mayaHp = 255;
+    mayaMaxHp = 255;
+    mayaCanJump = false;
+    mayaHasJumped = false;
+    mayaStomping = false;
+    mayaHasStomped = false;
+
+    mayaShootTypeUnlocked = false;
+    mayaShootType = 0;
+    mayaShootRate = 40;
+    mayaShootRateCount = 0;
+    mayaShootSpeed = 2000;
+    mayaCanShoot = true;
+
+    heartbeatRate = 4;
 
     // DEBUG TEXT
     if (config.physics.arcade.debug){
@@ -180,6 +227,9 @@ function create(){
     pics_Layer.setCollisionByExclusion(-1,true);
     mursExternes_Layer.setCollisionByExclusion(-1, true);
 
+    /*spaceBG0_Layer.setScrollFactor(0.3);
+    spaceBG1_Layer.setScrollFactor(0.25);*/
+
 
 
     // Maya
@@ -239,22 +289,6 @@ function create(){
         repeat : -1
     });
 
-    //COLLIDERS
-
-    this.physics.add.collider(maya, platforms_Layer);
-    this.physics.add.collider(maya, pics_Layer, mayaDeath(this));
-    this.physics.add.collider(maya, mursExternes_Layer);
-
-    /*this.physics.world.addCollider(player, enemies, hitplayer, null, this);
-    this.physics.add.collider(enemies, wallsLayer);
-    this.physics.add.overlap(enemies, shoots,hitenemies, null, this);
-    this.physics.add.collider(shoots, wallsLayer,hitwalls, null, this);
-    this.physics.add.collider(lazers, wallsLayer,hitwalls, null, this);
-    this.physics.add.overlap(player,lazers, deathplayer, null, this);
-    this.physics.add.overlap(player, bullet1,addmun, null, this);
-    this.physics.add.overlap(player, bullet2,addmun, null, this);
-    this.physics.add.overlap(player, bullet3,addmun, null, this);
-    this.physics.add.overlap(player, Moon,EndGame, null, this);*/
 
     // Divers
 
@@ -277,24 +311,103 @@ function create(){
     .setOrigin(0,0);
 
     this.anims.create({
-        key :'heartbeatAnim',
+        key :'heartbeatAnim1',
+        frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
+        frameRate : heartbeatRate,
+        repeat : -1
+    });
+    this.anims.create({
+        key :'heartbeatAnim2',
+        frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
+        frameRate : heartbeatRate,
+        repeat : -1
+    });
+    this.anims.create({
+        key :'heartbeatAnim3',
+        frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
+        frameRate : heartbeatRate,
+        repeat : -1
+    });
+    this.anims.create({
+        key :'heartbeatAnim4',
+        frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
+        frameRate : heartbeatRate,
+        repeat : -1
+    });
+    this.anims.create({
+        key :'heartbeatAnim5',
         frames : this.anims.generateFrameNumbers('heartbeat', {start :0, end: 6}),
         frameRate : heartbeatRate,
         repeat : -1
     });
 
+    lifeGaugeText = this.add.text(100, 75, mayaHp, {
+        padding: { x: 10, y: 5 },
+        fill: '#ffffff'
+    });
+
+    lifeGaugeText.setScrollFactor(0)
+    .setOrigin(0, 0)
+    .setDepth(1);
+
 
     // Intro
 
+    if(!beginPlay){
     introScreen = this.add.image(0, 0, 'intro')
     .setScrollFactor(0)
     .setOrigin(0, 0)
     .setDepth(1.5);
+    }
 
     // Camera
 
     this.cameras.main.startFollow(maya);
     this.cameras.main.setBounds(0, 0, maya.widthInPixels, maya.heightInPixels);
+
+    // Ennemis
+
+    spaceBee1X = 6400;
+    spaceBee1Y = 2900;
+    spaceBee1Alive = true;
+    spaceBee1hp = 200;
+    spaceBee1Power = 30;
+    spaceBee1Rate = 120;
+    spaceBee1Count = 0
+    spaceBee1frequency = 0.1;
+    spaceBee1amplitude = 120;
+    spaceBee1timer = 0;
+    spaceBee1 = this.physics.add.sprite(spaceBee1X, spaceBee1Y, 'spaceBee');
+    spaceBee1.body.setAllowGravity(false);
+
+    this.anims.create({
+        key :'spaceBeeAnim',
+        frames : this.anims.generateFrameNumbers('spaceBee', {start :0, end: 3}),
+        frameRate : 12,
+        repeat : -1
+    });
+
+    //COLLIDERS
+
+    this.physics.add.collider(maya, platforms_Layer);
+    this.physics.add.collider(maya, pics_Layer, function(){mayaHp = 0});
+    this.physics.add.collider(maya, mursExternes_Layer);
+
+    this.physics.add.collider(maya, spaceBee1, mayaHurtSB1)
+    this.physics.add.collider(spaceBee1, maya, mayaHurtSB1)
+    this.physics.add.collider(spaceBee1, platforms_Layer)
+
+    /*this.physics.world.addCollider(player, enemies, hitplayer, null, this);
+    this.physics.add.collider(enemies, wallsLayer);
+    this.physics.add.overlap(enemies, shoots,hitenemies, null, this);
+    this.physics.add.collider(shoots, wallsLayer,hitwalls, null, this);
+    this.physics.add.collider(lazers, wallsLayer,hitwalls, null, this);
+    this.physics.add.overlap(player,lazers, deathplayer, null, this);
+    this.physics.add.overlap(player, bullet1,addmun, null, this);
+    this.physics.add.overlap(player, bullet2,addmun, null, this);
+    this.physics.add.overlap(player, bullet3,addmun, null, this);
+    this.physics.add.overlap(player, Moon,EndGame, null, this);*/
+
 
 }
 
@@ -307,7 +420,7 @@ function update(){
         debugText.setText('maya blocked Down : ' + maya.body.blocked.down + '    maya weightlessness : ' + mayaWeightlessness + 
         '\nmaya can Jump : ' + mayaCanJump + '    maya has Jumped : ' + mayaHasJumped + 
         '\nmaya Jump Timer : ' + mayaJumpTimer + '    maya Jump Timer Buffer : ' + mayaJumpTimerBuffer +
-        '\n rotation canon :' + Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor)
+        '\n spacebee1.y :' + spaceBee1.x
         );
     }
 
@@ -316,6 +429,12 @@ function update(){
     if(!beginPlay)
         intro();
     else{
+
+        if (mayaHp <= 0)  mayaDeath(this)
+
+        mayaInviManagement();
+
+        spaceBee1_behav();
 
         uiAnims(this);  
 
@@ -388,6 +507,13 @@ function cursorPosition(){
 
 function mayaFire(context){
     if (mayaCanShoot){
+        if (!mayaShootTypeUnlocked){
+            maya.setVelocityX(200 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+            maya.setVelocityY(200 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+        }else{
+            maya.setVelocityX(600 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+            maya.setVelocityY(600 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
+        }
         mayaCanShoot = false;
 
         if (!mayaShootTypeUnlocked){
@@ -395,7 +521,7 @@ function mayaFire(context){
         }
 
 
-        for (const mayaBullet of mayaBulletGroup.children.entries) {
+        /*for (const mayaBullet of mayaBulletGroup.children.entries) {
             if (enemie.body.blocked.right) {
                 enemie.direction = 'LEFT';
             }
@@ -414,7 +540,7 @@ function mayaFire(context){
                 enemie.anims.play("enemierun", true);
             }
            
-        }
+        }*/
 
         mayaBullet = context.physics.add.sprite(maya.x - 20 * mayaOrientation, maya.y - 51, 'mayaBullet');
         mayaBullet.rotation = Phaser.Math.Angle.BetweenPoints(mayaBullet, mouseCursor);
@@ -447,9 +573,6 @@ function mayaFire(context){
             mayaShootRate = 40;
         }
     }
-
-    maya.setVelocityX(500 * Math.cos(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
-    maya.setVelocityY(500 * Math.sin(Phaser.Math.Angle.BetweenPoints(mayaCanon, mouseCursor) + Math.PI));
 }
 
 function mayaPlatformerControl(context){
@@ -494,20 +617,20 @@ function mayaPlatformerControl(context){
     }
 
     // Stomp
-    /*
+    
     if(cursors.down.isDown && !maya.body.blocked.down && !mayaStomping){  // Si Bas est appuyé, si Maya ne touche pas le sol et qu'elle n'esrt pas déjà en train de stomper
         mayaStomping = true;                                             // Maya est en train de stomper (ça veut pas dire grand-chose mais tant pis, je trouve pas la traduction FR, mais bon, d'un autre côté, tout le monde comprend, enfin je crois, sinon, bah tant pis)
         mayaCanJump = false;                                             // Maya ne peut pas sauter
     }
     
     if (mayaStomping){                                                  // Si Maya est en train de stomper                                             
-        maya.setVelocity(0, 3000);                                       // Maya charge le sol en annulant les autres directions
+        maya.setVelocity(0, 800);                                       // Maya charge le sol en annulant les autres directions
         if (maya.body.blocked.down){                                   // Si Maya entre en contact avec le sol                              
             mayaStomping = false;
         }
     } else {
         mayaHasStomped = false;
-    }*/
+    }
 }
 
 function intro(){
@@ -530,14 +653,7 @@ function uiAnims(context){
     else if (mayaHp >= 1)  heartbeatRate = 16;
     else if (mayaHp == 1)  heartbeatRate = 0;
 
-    lifeGaugeText = context.add.text(100, 75, mayaHp, {
-        padding: { x: 10, y: 5 },
-        fill: '#ffffff'
-    });
-
-    lifeGaugeText.setScrollFactor(0)
-    .setOrigin(0, 0)
-    .setDepth(1);
+    lifeGaugeText.setText(mayaHp);
 }
 
 function mayaWeightlessnessControl(context){
@@ -546,4 +662,60 @@ function mayaWeightlessnessControl(context){
 
 function mayaDeath(context){
     context.scene.restart();
+}
+
+function mayaInviManagement(){
+    if(mayaInvincible){
+        if (mayaInvincibleTimer < 60){
+            if (mayaInvincibleTimer < 10)   maya.alpha = 0.2;
+            else if (mayaInvincibleTimer < 15)   maya.alpha = 0.5;
+            else if (mayaInvincibleTimer < 20)   maya.alpha = 0.2;
+            else if (mayaInvincibleTimer < 25)   maya.alpha = 0.5;
+            else if (mayaInvincibleTimer < 30)   maya.alpha = 0.2;
+            else if (mayaInvincibleTimer < 35)   maya.alpha = 0.5;
+            else if (mayaInvincibleTimer < 40)   maya.alpha = 0.2;
+            else if (mayaInvincibleTimer < 45)   maya.alpha = 0.5;
+            else if (mayaInvincibleTimer < 50)   maya.alpha = 0.2;
+            else if (mayaInvincibleTimer < 55)   maya.alpha = 0.5;
+        }else{
+            maya.alpha = 1;
+            mayaInvincibleTimer = 0
+            mayaInvincible = false;
+        }
+        mayaInvincibleTimer ++;
+    }
+
+
+}
+
+function spaceBee1_behav(){
+
+    if(spaceBee1Alive){
+    if(!spaceBee1.anims.isPlaying)
+        spaceBee1.play('spaceBeeAnim')
+        
+    spaceBee1.y = spaceBee1Y + Math.sin(spaceBee1timer*spaceBee1frequency)*spaceBee1amplitude;
+    spaceBee1timer ++;
+
+    if(maya.x > 5500 && maya.x < 6400){
+
+    }
+        if(spaceBee1Count >= spaceBee1Rate)
+        spaceBee1.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee1, maya)));
+        spaceBee1.setVelocityY(400 * Math.sin(Phaser.Math.Angle.BetweenPoints(spaceBee1, maya)));
+        if((spaceBee1Count >= spaceBee1Rate + 150)){
+            spaceBee1Count = 0
+            spaceBee1.setVelocity(0, 0);
+        }
+
+        spaceBee1Count++;
+    }
+
+}
+
+function mayaHurtSB1(){
+    if(!mayaInvincible){
+    mayaInvincible = true;
+    mayaHp -= spaceBee1Power;
+    }
 }
