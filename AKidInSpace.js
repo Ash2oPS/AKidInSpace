@@ -833,18 +833,19 @@ function spaceBee1_behav(){
     spaceBee1.y = spaceBee1Y + Math.sin(spaceBee1timer*spaceBee1frequency)*spaceBee1amplitude;
     spaceBee1timer ++;
 
-    if(maya.x > 6000){
+    if(maya.x > spaceBee1.x + 600){
 
         if(spaceBee1Count >= spaceBee1Rate)
         spaceBee1.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee1, maya)));
         spaceBee1.setVelocityY(400 * Math.sin(Phaser.Math.Angle.BetweenPoints(spaceBee1, maya)));
+    }
         if((spaceBee1Count >= spaceBee1Rate + 150)){
             spaceBee1Count = 0
             spaceBee1.setVelocity(0, 0);
         }
 
         spaceBee1Count++;
-    }
+    
 }
 
 }
@@ -886,12 +887,13 @@ function spaceBee2_behav(){
     spaceBee2.y = spaceBee2Y + Math.sin(spaceBee2timer*spaceBee2frequency)*spaceBee2amplitude;
     spaceBee2timer ++;
 
-    if(maya.x > 17000){
+    if(maya.x > spaceBee2.x + 600){
 
     
         if(spaceBee2Count >= spaceBee2Rate)
         spaceBee2.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee2, maya)));
         spaceBee2.setVelocityY(400 * Math.sin(Phaser.Math.Angle.BetweenPoints(spaceBee2, maya)));
+    }
         if((spaceBee2Count >= spaceBee2Rate + 150)){
             spaceBee2Count = 0
             spaceBee2.setVelocity(0, 0);
@@ -899,7 +901,7 @@ function spaceBee2_behav(){
 
             spaceBee2Count++;
         }
-    }
+    
 
 }
 
@@ -940,19 +942,20 @@ function spaceBee3_behav(){
     spaceBee3.y = spaceBee3Y + Math.sin(spaceBee3timer*spaceBee3frequency)*spaceBee3amplitude;
     spaceBee3timer ++;
 
-    if(maya.x > 26650){
+    if(maya.x > spaceBee1.x + 900){
 
     
         if(spaceBee3Count >= spaceBee3Rate)
         spaceBee3.setVelocityX(400 * Math.cos(Phaser.Math.Angle.BetweenPoints(spaceBee3, maya)));
         spaceBee3.setVelocityY(400 * Math.sin(Phaser.Math.Angle.BetweenPoints(spaceBee3, maya)));
+    }
         if((spaceBee3Count >= spaceBee3Rate + 150)){
             spaceBee3Count = 0
             spaceBee3.setVelocity(0, 0);
         }
 
         spaceBee3Count++;
-    }
+    
 
 }
 
